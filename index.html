@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>行业分析工作台 · 证据分级版</title>
+<style>
+  :root {
+    --bg: #f6f5f1; --panel: #ffffff; --ink: #1f2428; --muted: #6b7280;
+    --line: #e3e0d8; --accent: #0f6b5c; --accent-ink: #ffffff;
+    --warn: #b45309; --err: #b91c1c; --code-bg: #f0efe9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171a; --panel: #1d2126; --ink: #e7e5df; --muted: #9aa0a6;
+      --line: #2e343b; --accent: #3ba08e; --accent-ink: #0d1412; --code-bg: #262b31;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.75 -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; }
+  header { position: sticky; top: 0; z-index: 10; background: var(--bg);
+    border-bottom: 1px solid var(--line); padding: 10px 16px; }
+  .bar { max-width: 980px; margin: 0 auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .bar h1 { font-size: 16px; margin: 0 12px 0 0; white-space: nowrap; }
+  input[type=text], input[type=password], select {
+    background: var(--panel); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 8px; padding: 8px 10px; font-size: 14px; }
+  #industry { flex: 1; min-width: 160px; }
+  button { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 8px;
+    padding: 8px 16px; font-size: 14px; cursor: pointer; font-weight: 600; }
+  button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); font-weight: 400; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  #usage { font-size: 12px; color: var(--muted); margin-left: auto; white-space: nowrap; }
+  main { max-width: 980px; margin: 0 auto; padding: 20px 16px 120px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 18px 22px; margin-bottom: 18px; }
+  .card > .head { display: flex; align-items: baseline; gap: 10px; border-bottom: 1px solid var(--line);
+    padding-bottom: 8px; margin-bottom: 12px; }
+  .card > .head h2 { font-size: 15px; margin: 0; }
+  .status { font-size: 12px; color: var(--muted); }
+  .status.err { color: var(--err); }
+  .status.run::before { content: "●"; color: var(--accent); margin-right: 4px; animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: .2; } }
+  #settings { display: none; }
+  #settings.open { display: block; }
+  #settings .row { display: flex; gap: 10px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
+  #settings label { font-size: 13px; color: var(--muted); min-width: 88px; }
+  #apiKey, #baseUrl { flex: 1; min-width: 240px; }
+  #model { width: 240px; }
+  .hint { font-size: 12px; color: var(--muted); }
+  #choiceBar { display: none; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+  #choiceBar.open { display: flex; }
+  #customChoice { flex: 1; min-width: 200px; }
+  #chatBar { display: none; gap: 8px; margin-top: 12px; }
+  #chatBar.open { display: flex; }
+  #chatInput { flex: 1; }
+  /* markdown */
+  .md h1, .md h2 { font-size: 17px; margin: 18px 0 8px; }
+  .md h3 { font-size: 15.5px; margin: 16px 0 6px; }
+  .md h4 { font-size: 15px; margin: 14px 0 4px; }
+  .md p { margin: 8px 0; }
+  .md hr { border: 0; border-top: 1px solid var(--line); margin: 16px 0; }
+  .md blockquote { margin: 8px 0; padding: 2px 14px; border-left: 3px solid var(--accent); color: var(--muted); }
+  .md code { background: var(--code-bg); border-radius: 4px; padding: 1px 5px; font-size: 13px; }
+  .md pre { background: var(--code-bg); border-radius: 8px; padding: 12px; overflow-x: auto; }
+  .md pre code { background: none; padding: 0; }
+  .md ul, .md ol { margin: 6px 0; padding-left: 24px; }
+  .md li { margin: 3px 0; }
+  .md .tablewrap { overflow-x: auto; margin: 10px 0; }
+  .md table { border-collapse: collapse; font-size: 13.5px; min-width: 100%; }
+  .md th, .md td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
+  .md th { background: var(--code-bg); white-space: nowrap; }
+  .md a { color: var(--accent); }
+  .chip { display: inline-block; font-size: 12px; background: var(--code-bg); border-radius: 999px;
+    padding: 2px 10px; margin-left: 6px; color: var(--muted); }
+  .turn-user { border-left: 3px solid var(--accent); padding-left: 12px; margin: 14px 0 6px; color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1>行业分析工作台</h1>
+    <input id="industry" type="text" placeholder="输入行业名称，例如：媒体行业 / 骨科耗材 / 县域客运">
+    <button id="startBtn">开始分析</button>
+    <button id="stopBtn" class="ghost" disabled>停止</button>
+    <button id="exportBtn" class="ghost" disabled>导出 .md</button>
+    <button id="gearBtn" class="ghost">⚙ 设置</button>
+    <span id="usage"></span>
+  </div>
+</header>
+<main>
+  <div id="settings" class="card">
+    <div class="row"><label>API 地址</label>
+      <input id="baseUrl" type="text" placeholder="留空 = 官方 https://api.anthropic.com；三方平台填其地址，如 https://api.cherryin.ai">
+    </div>
+    <div class="row"><label>API Key</label><input id="apiKey" type="password" placeholder="sk-ant-...（官方）或三方平台发放的 Key"></div>
+    <div class="row"><label>模型</label>
+      <input id="model" type="text" list="modelList" placeholder="claude-opus-5">
+      <datalist id="modelList">
+        <option value="claude-opus-5"></option>
+        <option value="claude-sonnet-5"></option>
+        <option value="anthropic/claude-opus-5"></option>
+        <option value="anthropic/claude-opus-4.8"></option>
+        <option value="anthropic/claude-sonnet-4.6"></option>
+      </datalist>
+      <label>认证方式</label>
+      <select id="authMode">
+        <option value="auto">自动（官方 x-api-key，三方 Bearer）</option>
+        <option value="x-api-key">x-api-key</option>
+        <option value="bearer">Authorization: Bearer</option>
+      </select>
+      <label>联网核实</label>
+      <select id="search">
+        <option value="on">开（A 档出处必须检索核实）</option>
+        <option value="off">关（全部降为 B/C 档）</option>
+      </select>
+    </div>
+    <p class="hint">Key 仅存在浏览器 localStorage，请求直发所填地址的 <code>/v1/messages</code>（Anthropic 原生格式）。
+      三方平台要求：支持 Anthropic 原生 Messages 接口和浏览器 CORS；模型 ID 按平台写法填（如
+      <code>anthropic/claude-opus-5</code>）。「联网核实」用的是 Anthropic 服务端 web_search 工具，
+      平台不透传时会自动降级为无检索模式（届时报告不再有 A 档）。安全分类器的服务端
+      fallback（<code>fallbacks:"default"</code>）仅在官方地址下启用。
+      一次完整五步分析（含检索）token 消耗较大，请留意右上角用量。</p>
+  </div>
+  <div id="sections"></div>
+</main>
+
+<script>
+/* ---------------- prompts ---------------- */
+const SYSTEM_RULES = `你是行业分析助手。你在本次任务中必须遵守以下规则，优先级高于一切后续指令：
+
+【证据分级】
+你输出的每一个事实性字段，都必须带一个 evidence 标签，只有三档：
+  A = 公开可查。必须给出具体出处（公司公告 / 招股书 / 年报 / 监管文件 / 行业协会数据），出处要具体到文件名和年份，不许写"据公开资料"。
+  B = 行业常识推断。必须写出推断链条：我从哪个已知事实，通过什么逻辑，推到这个结论。
+  C = 纯推测。我没有依据，只是根据同类行业的一般规律猜的。
+
+【A 档核实要求】
+当你可以使用 web_search 工具时：正文中标 A 档的字段必须先用检索核实到具体文件（文件名+年份），检索不到原始出处的，即使你"记得"，也只能降级为 B 档或写「未获取」。凭记忆写出的文件名和数字视为编造。
+当没有检索工具时：不得标 A 档，最高只能标 B 档并注明"凭记忆，未核实"。
+
+【C 档处理规则】
+C 档内容一律不许出现在报告正文里，只能进入结尾的「待验证清单」。
+如果某个字段你只能给出 C 档，就在正文里写「未获取」，不要用推测填满它。
+
+【禁止事项】
+- 不许用"较强 / 较弱 / 相对集中 / 比较分散"这类无法判定的表述。所有强弱判断必须换算成可判定的量：需要多久、多少钱、多少家、几个月。
+- 不许说"总体来看""综合而言"开头的段落。
+- 不许在用户没问的时候给建议、给展望、给趋势预测。
+- 不许因为用户看起来懂或不懂而调整结论。
+
+【态度】
+你不需要让用户满意。你需要让用户知道哪些是真的、哪些是你编的。`;
+
+const P_BOUNDARY = (industry) => `我要系统地了解一个行业：${industry}。
+
+在开始之前，先不要给我任何内容。请你做一件事：
+
+这个名称在实际使用中可能指向几个完全不同的行业。请列出 2-4 个候选边界，每个候选写清楚：
+  - 这个边界包含什么、明确不包含什么
+  - 它的典型玩家是谁（各举 2 个）
+  - 选这个边界的话，后面分析的重心会落在哪里
+
+然后问我选哪一个。在我回答之前，不要开始分析。
+
+注意：如果这几个候选之间的差别很小，说明你切分得不对，重切。真正有意义的切分，应该让不同候选的产业链结构明显不同。`;
+
+const P_STRUCTURE = (choice) => `边界已确认：${choice}
+
+现在做结构层。按下面的格式输出，不要写导语和总结。
+
+【产业链分层】
+从最上游到最终用户，分成若干层。每一层输出一行：
+
+  层级 | 这一环干什么 | 代表公司(2-3家) | 它靠什么赚钱 | 收入确认时点 | evidence
+
+其中：
+- 「它靠什么赚钱」不许写"销售产品"。要写清楚收费方式：按件 / 按量 / 按项目 / 抽佣 / 订阅 / 赚差价 / 赚账期 / 赚返点，以及向谁收（很多行业里，付钱的人和用东西的人不是同一个）。
+- 「收入确认时点」写：签约时 / 发货时 / 验收时 / 回款时 / 分期。这一栏后面会用到，不许留空，不知道就写「未获取」。
+
+【这条链的特殊之处】
+和一般制造业/服务业的标准链条比，这条链多了哪一环、少了哪一环、或者哪一环的位置不一样？只写差异，不写共性。
+
+【我可能画错的地方】
+你在分层时做了哪 3 个判断是可能错的？逐条列出。`;
+
+const P_FLOWS = `基于上面的产业链，现在拆三条流转链。三条分开输出，不要合并。
+
+【钱流】
+从最终用户付出的 100 元开始，追踪它依次经过哪些环节。每一跳一行：
+
+  从谁 → 到谁 | 这一跳留下多少(%) | 账期多长 | 谁先垫钱 | evidence
+
+  账期和垫资这两栏是重点。如果不知道，写「未获取」并列入待验证清单，绝对不许用行业平均值或者常识填充。
+
+【货流 / 服务交付流】
+东西（或服务）实际怎么从生产端到达用户端。每一跳一行：
+
+  从哪 → 到哪 | 谁掌握控制权 | 谁承担损耗和退货 | 时间多久 | evidence
+
+  注意：货流和钱流的路径经常不一致（比如经销商不碰货只走账，或者平台碰货不碰账）。如果这条链和钱流路径不同，明确指出不同在哪。
+
+【用户流】
+用户是怎么被找到、被转化、被留住的。
+
+  获客渠道 | 决策者是谁 | 付钱的是谁 | 使用的是谁 | 复购触发条件 | evidence
+
+  「决策者 / 付钱的 / 使用的」三者是否分离，是这个行业的一个关键特征，必须明确回答是或否。
+
+【三条链的错位】
+三条链在哪一环出现了错位（控制权、资金、使用权不在同一方手里）？错位的地方通常就是这个行业的矛盾和机会所在，逐条指出。`;
+
+const P_POWER = `现在分析议价能力。
+
+严格禁止使用以下表述：议价能力较强 / 较弱 / 相对集中 / 比较分散 / 处于优势地位 / 话语权较大。这些说法对任何行业都成立，等于没说。
+
+对下面五个问题逐一作答，每个问题的答案必须是一个可以被验证的量。
+
+1. 供应商议价
+   问：如果现在要换掉这条链上最大的那个供应商，需要多久？成本上升多少？有几家可替代的？换供应商需要重新认证/备案吗？
+   → 答案里必须出现具体的时间或金额。答不出来写「未获取」。
+
+2. 客户议价
+   问：客户从这一环切换到竞争对手，具体要付出什么代价？（合同违约金 / 数据迁移 / 重新培训 / 库存作废 / 关系重建 / 无代价）
+   → 如果答案是"基本无代价"，那这一环的议价权就是零，直接这么写。
+
+3. 替代品威胁
+   问：这个行业的需求，上一次被另一种形态吃掉是什么时候？吃掉了多少？现在有没有正在发生的同类事情？
+   → 要具体事件，不要"随着技术发展可能被替代"这种话。
+
+4. 新进入者
+   问：挡住新人的到底是什么？在下面几项里点名，不许全选：
+   牌照/资质 | 起步资本量 | 渠道关系 | 手艺和经验 | 数据积累 | 规模成本 | 品牌信任 | 几乎没有壁垒
+   → 点名之后回答：一个有钱有人的新玩家，从零到能接单要多久？
+
+5. 同业竞争
+   问：现有玩家是在同一个维度上打，还是分层错开？最近三年发生过几次价格战？由谁发起？结果如何？
+   → 如果分层，说明分层的依据是什么（客户规模/地域/品类/服务深度）。
+
+【综合结论】
+在这条产业链上，利润最终沉淀在哪一环？为什么是这一环而不是别的？用上面五个答案来论证，不许引入新的理由。
+
+【最脆弱的一环】
+哪一环的议价权最容易在未来两年内被削弱？触发条件是什么？标注 evidence，如果是 C 档就明说这是推测。`;
+
+const P_TACIT = `最后一层。注意：这一层的规则和前面三层完全不同。
+
+这三类信息在公开资料里极少存在，你大概率不知道。因此本步骤中：
+- 你不许输出结论
+- 你只许输出「我猜是这样」+「怎么验证」+「该问谁」
+- 每一条都默认是 C 档，不需要标 evidence，但必须写清楚验证方法
+
+【约束｜这个行业不能做的事】
+分三类，每类给 3-5 条假设：
+  法规约束：牌照、审批、准入、强制标准、监管红线
+  物理约束：保质期、温控、运输半径、产能爬坡时间、设备切换成本
+  习惯约束：账期惯例、返点潜规则、渠道保护、不能越过的关系
+
+  格式：假设 | 如果这条成立会导致什么 | 怎么验证 | 该问谁
+
+  重点：外行提出的蠢建议，几乎全部是撞在某条约束上，而且提出时完全不知道那条线存在。请你尽量列出那些"外行不会想到"的约束。
+
+【节奏｜这个行业按什么周期运转】
+  旺淡季在什么时候？| 客户的预算审批窗口？| 决策周期多长？| 库存周转天数？| 什么时候找客户是白费力气？
+
+  格式同上：假设 | 影响 | 怎么验证 | 该问谁
+
+  重点：外行最典型的失败不是做错事，是在错误的时间点做正确的事。
+
+【异常｜看到什么意味着出事了】
+  列出 8-10 个"数据组合"，每个说明它可能意味着什么。写成问句形式：「如果我看到 X 和 Y 同时发生，这在你们行业里通常意味着什么？」这些问句就是我要去问内行的清单。
+
+【结尾必须输出：你还不知道的 10 件事】
+这份报告读完之后，我最可能产生的错觉是什么？明确列出 10 件"这份报告没有回答、但对判断这个行业很关键"的事。
+
+这一屏是整个任务里最重要的部分。不要客气，不要为了让报告显得完整而缩短这个清单。`;
+
+const P_ROLEPLAY = `上面是我们一起做出的行业分析。现在切换角色。
+
+你是一位在这个行业干了 12 年的从业者。我是一个刚接触这个行业、读了一些资料就来找你聊的人。
+
+你的行为规则（优先级高于一切）：
+1. 全程保持这个角色，不要跳出来解释你是 AI。
+2. 禁止使用以下表达：很好的问题 / 你说得对 / 思路清晰 / 有道理 / 你已经抓住了重点。一次都不许出现。
+3. 你的提问必须集中攻击上面报告里 evidence 为 B 和 C 的字段，以及「未获取」的那些栏。哪里心虚就问哪里。
+4. 当我的回答里出现外行痕迹时，直接打断，指出是哪个词、哪个假设不对。不要等我说完，也不要先肯定再否定。
+5. 一次只说 3 句话以内，像真人对话。
+
+进行 15 轮之后，跳出角色，给我一份诊断：
+  - 这份报告里哪几栏其实是空的，只是看起来被填满了
+  - 我哪几处用词暴露了我是外行（原句 + 内行会怎么说）
+  - 如果我只能再补 3 块知识，应该补哪 3 块
+
+现在由你先开口，提出第一个问题。`;
+
+const STEPS = [
+  { id: "structure", title: "Step 1 · 结构层：产业链分层", prompt: null /* filled with choice */ },
+  { id: "flows",     title: "Step 2 · 三条流转链：钱流 / 货流 / 用户流", prompt: P_FLOWS },
+  { id: "power",     title: "Step 3 · 议价能力（可验证的量）", prompt: P_POWER },
+  { id: "tacit",     title: "Step 4 · 约束 / 节奏 / 异常 + 你还不知道的 10 件事", prompt: P_TACIT },
+];
+
+/* ---------------- state ---------------- */
+const $ = (id) => document.getElementById(id);
+const state = {
+  convo: [],            // [{role, content}]
+  running: false,
+  abort: null,
+  usage: { in: 0, out: 0 },
+  sections: [],         // {id, title, el, mdEl, statusEl, text}
+  chatRounds: 0,
+};
+
+$("apiKey").value = localStorage.getItem("ia_key") || "";
+$("baseUrl").value = localStorage.getItem("ia_base") || "";
+$("model").value = localStorage.getItem("ia_model") || "claude-opus-5";
+$("authMode").value = localStorage.getItem("ia_auth") || "auto";
+$("search").value = localStorage.getItem("ia_search") || "on";
+$("apiKey").addEventListener("change", () => localStorage.setItem("ia_key", $("apiKey").value.trim()));
+$("baseUrl").addEventListener("change", () => localStorage.setItem("ia_base", $("baseUrl").value.trim()));
+$("model").addEventListener("change", () => localStorage.setItem("ia_model", $("model").value.trim()));
+$("authMode").addEventListener("change", () => localStorage.setItem("ia_auth", $("authMode").value));
+$("search").addEventListener("change", () => localStorage.setItem("ia_search", $("search").value));
+$("gearBtn").addEventListener("click", () => $("settings").classList.toggle("open"));
+if (!$("apiKey").value) $("settings").classList.add("open");
+
+/* ---------------- markdown ---------------- */
+function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+function inline(s) {
+  return s
+    .replace(/`([^`]+)`/g, (_, c) => "<code>" + c + "</code>")
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/\[([^\]]+)\]\((https?:[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+}
+function mdToHtml(src) {
+  const lines = src.split("\n");
+  let out = [], i = 0, list = null;
+  const closeList = () => { if (list) { out.push(list === "ul" ? "</ul>" : "</ol>"); list = null; } };
+  while (i < lines.length) {
+    const raw = lines[i];
+    const line = raw.trimEnd();
+    if (/^```/.test(line)) {
+      closeList(); const buf = []; i++;
+      while (i < lines.length && !/^```/.test(lines[i])) { buf.push(lines[i]); i++; }
+      i++; out.push("<pre><code>" + esc(buf.join("\n")) + "</code></pre>"); continue;
+    }
+    if (/^\s*\|.*\|\s*$/.test(line) && i + 1 < lines.length && /^\s*\|?[\s:|-]+\|?\s*$/.test(lines[i + 1]) && lines[i + 1].includes("-")) {
+      closeList();
+      const rows = [line]; i += 2;
+      while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) { rows.push(lines[i]); i++; }
+      const cells = (r) => r.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => inline(esc(c.trim())));
+      let t = '<div class="tablewrap"><table><thead><tr>';
+      t += cells(rows[0]).map((c) => "<th>" + c + "</th>").join("") + "</tr></thead><tbody>";
+      for (let r = 1; r < rows.length; r++) t += "<tr>" + cells(rows[r]).map((c) => "<td>" + c + "</td>").join("") + "</tr>";
+      out.push(t + "</tbody></table></div>"); continue;
+    }
+    let m;
+    if ((m = line.match(/^(#{1,4})\s+(.*)$/))) { closeList(); out.push(`<h${m[1].length}>` + inline(esc(m[2])) + `</h${m[1].length}>`); }
+    else if (/^(-{3,}|\*{3,})$/.test(line.trim())) { closeList(); out.push("<hr>"); }
+    else if ((m = line.match(/^>\s?(.*)$/))) { closeList(); out.push("<blockquote>" + inline(esc(m[1])) + "</blockquote>"); }
+    else if ((m = line.match(/^\s*[-*]\s+(.*)$/))) { if (list !== "ul") { closeList(); out.push("<ul>"); list = "ul"; } out.push("<li>" + inline(esc(m[1])) + "</li>"); }
+    else if ((m = line.match(/^\s*(\d+)[.、]\s+(.*)$/))) { if (list !== "ol") { closeList(); out.push("<ol>"); list = "ol"; } out.push(`<li value="${m[1]}">` + inline(esc(m[2])) + "</li>"); }
+    else if (line.trim() === "") { closeList(); }
+    else { closeList(); out.push("<p>" + inline(esc(line)) + "</p>"); }
+    i++;
+  }
+  closeList();
+  return out.join("\n");
+}
+
+/* ---------------- UI helpers ---------------- */
+function addSection(id, title) {
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerHTML = `<div class="head"><h2>${esc(title)}</h2><span class="status"></span></div><div class="md"></div>`;
+  $("sections").appendChild(card);
+  const sec = { id, title, el: card, mdEl: card.querySelector(".md"), statusEl: card.querySelector(".status"), text: "", searches: 0 };
+  state.sections.push(sec);
+  card.scrollIntoView({ behavior: "smooth", block: "start" });
+  return sec;
+}
+let renderPending = null;
+function renderSec(sec) {
+  if (renderPending) return;
+  renderPending = requestAnimationFrame(() => { renderPending = null; sec.mdEl.innerHTML = mdToHtml(sec.text); });
+}
+function setStatus(sec, txt, cls) { sec.statusEl.textContent = txt; sec.statusEl.className = "status " + (cls || ""); }
+function updateUsage() { $("usage").textContent = `in ${state.usage.in.toLocaleString()} / out ${state.usage.out.toLocaleString()} tok`; }
+
+/* ---------------- API ---------------- */
+function apiCfg() {
+  const base = ($("baseUrl").value.trim() || "https://api.anthropic.com").replace(/\/+$/, "");
+  const official = /^https:\/\/api\.anthropic\.com$/.test(base);
+  let mode = $("authMode").value;
+  if (mode === "auto") mode = official ? "x-api-key" : "bearer";
+  const headers = { "content-type": "application/json", "anthropic-version": "2023-06-01" };
+  const key = $("apiKey").value.trim();
+  if (mode === "bearer") headers["Authorization"] = "Bearer " + key;
+  else headers["x-api-key"] = key;
+  if (official) {
+    headers["anthropic-beta"] = "server-side-fallback-2026-07-01";
+    headers["anthropic-dangerous-direct-browser-access"] = "true";
+  }
+  return { url: base + "/v1/messages", headers, official };
+}
+function buildBody(messages, official) {
+  const body = {
+    model: $("model").value.trim() || "claude-opus-5",
+    max_tokens: 64000,
+    stream: true,
+    system: SYSTEM_RULES,
+    cache_control: { type: "ephemeral" },
+    messages,
+  };
+  if (official) body.fallbacks = "default"; // 安全分类器 fallback，仅官方端点支持
+  if ($("search").value === "on") body.tools = [{ type: "web_search_20260209", name: "web_search", max_uses: 12 }];
+  return body;
+}
+
+async function streamOnce(messages, sec, signal) {
+  const cfg = apiCfg();
+  const body = buildBody(messages, cfg.official);
+  let res;
+  // 三方网关可能不认识可选参数：400 时按序剥离并重试，每个参数最多剥离一次
+  for (;;) {
+    res = await fetch(cfg.url, { method: "POST", signal, headers: cfg.headers, body: JSON.stringify(body) });
+    if (res.status !== 400) break;
+    const err = await res.json().catch(() => null);
+    const msg = err?.error?.message || JSON.stringify(err?.error || err) || "";
+    if (body.fallbacks !== undefined && /fallback/i.test(msg)) { delete body.fallbacks; continue; }
+    if (body.cache_control !== undefined && /cache_control/i.test(msg)) { delete body.cache_control; continue; }
+    if (body.tools !== undefined && /(tools?|web_search)/i.test(msg)) {
+      delete body.tools;
+      setStatus(sec, "该平台不支持服务端检索工具，已降级为无检索模式（本步不再有 A 档）", "err");
+      continue;
+    }
+    throw new Error("API 400: " + msg);
+  }
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(`API ${res.status}: ` + (err?.error?.message || res.statusText));
+  }
+
+  const blocks = [];
+  let stopReason = null;
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = "";
+  const handle = (p) => {
+    switch (p.type) {
+      case "message_start": {
+        const u = p.message.usage || {};
+        state.usage.in += (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0);
+        updateUsage(); break;
+      }
+      case "content_block_start": {
+        const b = JSON.parse(JSON.stringify(p.content_block));
+        blocks[p.index] = b;
+        if (b.type === "server_tool_use") { b._partial = ""; setStatus(sec, `检索中…（第 ${++sec.searches} 次）`, "run"); }
+        if (b.type === "web_search_tool_result") setStatus(sec, `已检索 ${sec.searches} 次，继续生成…`, "run");
+        break;
+      }
+      case "content_block_delta": {
+        const b = blocks[p.index]; if (!b) break;
+        const d = p.delta;
+        if (d.type === "text_delta") { b.text = (b.text || "") + d.text; sec.text += d.text; renderSec(sec); }
+        else if (d.type === "input_json_delta") { b._partial = (b._partial || "") + d.partial_json; }
+        else if (d.type === "thinking_delta") { b.thinking = (b.thinking || "") + d.thinking; }
+        else if (d.type === "signature_delta") { b.signature = (b.signature || "") + d.signature; }
+        break;
+      }
+      case "content_block_stop": {
+        const b = blocks[p.index];
+        if (b && b._partial !== undefined) { try { b.input = JSON.parse(b._partial || "{}"); } catch (e) {} delete b._partial; }
+        break;
+      }
+      case "message_delta": {
+        stopReason = p.delta?.stop_reason || stopReason;
+        if (p.usage?.output_tokens) { state.usage.out += p.usage.output_tokens; updateUsage(); }
+        break;
+      }
+      case "error": throw new Error("stream error: " + (p.error?.message || JSON.stringify(p.error)));
+    }
+  };
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    let idx;
+    while ((idx = buf.indexOf("\n\n")) !== -1) {
+      const chunk = buf.slice(0, idx); buf = buf.slice(idx + 2);
+      let data = null;
+      for (const ln of chunk.split("\n")) if (ln.startsWith("data:")) data = ln.slice(5).trim();
+      if (!data) continue;
+      handle(JSON.parse(data));
+    }
+  }
+  return { blocks: blocks.filter(Boolean), stopReason };
+}
+
+// Transient-failure wrapper: on network drop / 5xx / 429 / mid-stream error,
+// roll the section text back to the checkpoint and retry the whole request.
+async function streamWithRetry(messages, sec, signal) {
+  const ckText = sec.text, ckSearches = sec.searches;
+  const MAX_RETRY = 2;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await streamOnce(messages, sec, signal);
+    } catch (e) {
+      if (signal.aborted || e.name === "AbortError") throw e;
+      const msg = e.message || "";
+      const retryable = e.name === "TypeError" ||
+        /network|fetch|load failed|stream error|overloaded|API 5\d\d|API 529|API 429/i.test(msg);
+      if (!retryable || attempt >= MAX_RETRY) {
+        if (e.name === "TypeError" || /network|fetch|load failed/i.test(msg))
+          throw new Error(`连接被平台中断（已自动重试 ${MAX_RETRY} 次）。多为中转平台对长流式请求的超时断流，点下方按钮从本步继续。`);
+        throw e;
+      }
+      sec.text = ckText; sec.searches = ckSearches; renderSec(sec);
+      const wait = /429/.test(msg) ? 10000 : 2500 * (attempt + 1);
+      setStatus(sec, `连接中断，${Math.round(wait / 1000)} 秒后重试（${attempt + 1}/${MAX_RETRY}）…`, "run");
+      await new Promise((r) => setTimeout(r, wait));
+    }
+  }
+}
+
+// One logical turn: handles pause_turn continuations. Appends assistant turns into state.convo.
+// On failure, removes this turn's messages from convo so a retry starts clean.
+async function runTurn(userText, sec) {
+  state.convo.push({ role: "user", content: userText });
+  const userIdx = state.convo.length - 1;
+  const ctrl = new AbortController();
+  state.abort = ctrl;
+  setStatus(sec, "生成中…", "run");
+  try {
+    for (let i = 0; i < 10; i++) {
+      const { blocks, stopReason } = await streamWithRetry(state.convo, sec, ctrl.signal);
+      state.convo.push({ role: "assistant", content: blocks });
+      if (stopReason === "pause_turn") { setStatus(sec, "检索较多，继续…", "run"); continue; }
+      if (stopReason === "refusal") { setStatus(sec, "请求被安全分类器拒绝（含备用模型）", "err"); return false; }
+      if (stopReason === "max_tokens") { setStatus(sec, "达到输出上限，内容可能被截断", "err"); return true; }
+      setStatus(sec, sec.searches ? `完成 · 检索 ${sec.searches} 次` : "完成");
+      return true;
+    }
+    setStatus(sec, "连续续传超限，已停止", "err");
+    return false;
+  } catch (e) {
+    state.convo.length = userIdx; // drop the dangling user msg + partial assistant turns
+    throw e;
+  }
+}
+
+/* ---------------- flow ---------------- */
+function buildChoiceBar(sec) {
+  const bar = document.createElement("div");
+  bar.id = "choiceBar"; bar.className = "open";
+  bar.innerHTML = `
+    <span class="hint">选择边界：</span>
+    ${[1, 2, 3, 4].map((n) => `<button class="ghost" data-c="候选${["一","二","三","四"][n-1]}">候选${["一","二","三","四"][n-1]}</button>`).join("")}
+    <input id="customChoice" type="text" placeholder="或自定义边界 / 交叉组合，回车确认">`;
+  sec.el.appendChild(bar);
+  const pick = (choice) => { bar.remove(); runPipeline(choice); };
+  bar.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => pick(b.dataset.c)));
+  bar.querySelector("#customChoice").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && e.target.value.trim()) pick(e.target.value.trim());
+  });
+}
+
+async function start() {
+  const industry = $("industry").value.trim();
+  if (!industry) { $("industry").focus(); return; }
+  if (!$("apiKey").value.trim()) { $("settings").classList.add("open"); $("apiKey").focus(); return; }
+  $("sections").innerHTML = ""; state.sections = []; state.convo = [];
+  state.usage = { in: 0, out: 0 }; updateUsage();
+  state.running = true; toggleButtons();
+  const sec = addSection("boundary", `Step 0 · 边界切分：${industry}`);
+  try {
+    const ok = await runTurn(P_BOUNDARY(industry), sec);
+    if (ok) buildChoiceBar(sec);
+  } catch (e) {
+    setStatus(sec, e.name === "AbortError" ? "已停止" : "出错：" + e.message + "（重新点「开始分析」即可重试）", "err");
+  } finally { state.running = false; toggleButtons(); }
+}
+
+async function runPipeline(choice, startIdx = 0, reuseSec = null) {
+  state.running = true; toggleButtons();
+  try {
+    for (let si = startIdx; si < STEPS.length; si++) {
+      const step = STEPS[si];
+      let sec;
+      if (si === startIdx && reuseSec) {
+        sec = reuseSec; sec.text = ""; sec.searches = 0; sec.mdEl.innerHTML = "";
+      } else {
+        sec = addSection(step.id, step.title);
+      }
+      const prompt = step.id === "structure" ? P_STRUCTURE(choice) : step.prompt;
+      try {
+        const ok = await runTurn(prompt, sec);
+        if (!ok) { offerResume(sec, choice, si, "重试本步并继续"); return; }
+      } catch (e) {
+        const aborted = e.name === "AbortError";
+        setStatus(sec, aborted ? "已停止" : "出错：" + e.message, "err");
+        offerResume(sec, choice, si, aborted ? "从本步继续" : "重试本步并继续");
+        return;
+      }
+    }
+    buildChatEntry();
+  } finally { state.running = false; toggleButtons(); }
+}
+
+// 断点续跑：失败/停止的步骤单独重跑，前面步骤的上下文保留在 convo 里
+function offerResume(sec, choice, si, label) {
+  const b = document.createElement("button");
+  b.textContent = label;
+  b.style.marginTop = "10px";
+  b.addEventListener("click", () => { b.remove(); runPipeline(choice, si, sec); });
+  sec.el.appendChild(b);
+}
+
+/* ---------------- roleplay chat ---------------- */
+function buildChatEntry() {
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerHTML = `<div class="head"><h2>Step 5 · 从业者拷问（可选）</h2><span class="status"></span></div>
+    <p class="hint">进入后模型扮演 12 年从业者，专挑报告里 B/C 档和「未获取」的字段发问；15 轮后给出诊断。</p>
+    <button id="enterChat">进入拷问模式</button>`;
+  $("sections").appendChild(card);
+  card.querySelector("#enterChat").addEventListener("click", async () => {
+    card.querySelector("#enterChat").remove();
+    const sec = addSection("chat", "Step 5 · 从业者拷问");
+    state.chatRounds = 0;
+    state.running = true; toggleButtons();
+    try { await runTurn(P_ROLEPLAY, sec); }
+    catch (e) { setStatus(sec, "出错：" + e.message, "err"); }
+    finally { state.running = false; toggleButtons(); }
+    buildChatBar(sec);
+  });
+}
+function buildChatBar(sec) {
+  const bar = document.createElement("div");
+  bar.id = "chatBar"; bar.className = "open";
+  bar.innerHTML = `<input id="chatInput" type="text" placeholder="你的回答…（第 1 轮）">
+    <button id="chatSend">发送</button>`;
+  sec.el.appendChild(bar);
+  const input = bar.querySelector("#chatInput");
+  const send = async () => {
+    const txt = input.value.trim();
+    if (!txt || state.running) return;
+    input.value = "";
+    state.chatRounds++;
+    const div = document.createElement("div");
+    div.className = "turn-user"; div.textContent = `你（第 ${state.chatRounds} 轮）：${txt}`;
+    sec.mdEl.appendChild(div);
+    sec.text += `\n\n> **你（第 ${state.chatRounds} 轮）**：${txt}\n\n`;
+    state.running = true; toggleButtons();
+    try { await runTurn(txt, sec); }
+    catch (e) { setStatus(sec, "出错：" + e.message, "err"); }
+    finally {
+      state.running = false; toggleButtons();
+      input.placeholder = `你的回答…（第 ${state.chatRounds + 1} 轮）`;
+      input.focus();
+    }
+  };
+  bar.querySelector("#chatSend").addEventListener("click", send);
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter") send(); });
+}
+
+/* ---------------- misc ---------------- */
+function toggleButtons() {
+  $("startBtn").disabled = state.running;
+  $("stopBtn").disabled = !state.running;
+  $("exportBtn").disabled = state.sections.length === 0;
+}
+$("startBtn").addEventListener("click", start);
+$("industry").addEventListener("keydown", (e) => { if (e.key === "Enter") start(); });
+$("stopBtn").addEventListener("click", () => state.abort?.abort());
+$("exportBtn").addEventListener("click", () => {
+  const md = state.sections.map((s) => `# ${s.title}\n\n${s.text}`).join("\n\n---\n\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([md], { type: "text/markdown" }));
+  a.download = `行业分析-${$("industry").value.trim() || "report"}.md`;
+  a.click(); URL.revokeObjectURL(a.href);
+});
+</script>
+</body>
+</html>
