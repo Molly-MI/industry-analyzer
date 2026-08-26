@@ -1,134 +1,227 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>行业分析工作台 · 证据分级版</title>
+<title>行业分析工作台 · Evidence-Graded Industry Analysis</title>
 <style>
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+:root {
+  --bg: #f4f1e7;
+  --card: #fffdf7;
+  --ink: #2b2b26;
+  --muted: #8a877a;
+  --accent: #2f7d46;
+  --accent2: #5aa469;
+  --line: #e4dfd0;
+  --code-bg: #f0ece0;
+  --quote-bg: #f6f3e8;
+  --danger: #c0392b;
+}
+@media (prefers-color-scheme: dark) {
   :root {
-    --bg: #f6f5f1; --panel: #ffffff; --ink: #1f2428; --muted: #6b7280;
-    --line: #e3e0d8; --accent: #0f6b5c; --accent-ink: #ffffff;
-    --warn: #b45309; --err: #b91c1c; --code-bg: #f0efe9;
+    --bg: #16161a;
+    --card: #202024;
+    --ink: #e6e6e0;
+    --muted: #8f8f86;
+    --accent: #5cb87a;
+    --accent2: #81c784;
+    --line: #333338;
+    --code-bg: #2a2a2f;
+    --quote-bg: #26262b;
+    --danger: #e57373;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #14171a; --panel: #1d2126; --ink: #e7e5df; --muted: #9aa0a6;
-      --line: #2e343b; --accent: #3ba08e; --accent-ink: #0d1412; --code-bg: #262b31;
-    }
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink);
-    font: 15px/1.75 -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; }
-  header { position: sticky; top: 0; z-index: 10; background: var(--bg);
-    border-bottom: 1px solid var(--line); padding: 10px 16px; }
-  .bar { max-width: 980px; margin: 0 auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .bar h1 { font-size: 16px; margin: 0 12px 0 0; white-space: nowrap; }
-  input[type=text], input[type=password], select {
-    background: var(--panel); color: var(--ink); border: 1px solid var(--line);
-    border-radius: 8px; padding: 8px 10px; font-size: 14px; }
-  #industry { flex: 1; min-width: 160px; }
-  button { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 8px;
-    padding: 8px 16px; font-size: 14px; cursor: pointer; font-weight: 600; }
-  button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); font-weight: 400; }
-  button:disabled { opacity: .45; cursor: not-allowed; }
-  #usage { font-size: 12px; color: var(--muted); margin-left: auto; white-space: nowrap; }
-  main { max-width: 980px; margin: 0 auto; padding: 20px 16px 120px; }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
-    padding: 18px 22px; margin-bottom: 18px; }
-  .card > .head { display: flex; align-items: baseline; gap: 10px; border-bottom: 1px solid var(--line);
-    padding-bottom: 8px; margin-bottom: 12px; }
-  .card > .head h2 { font-size: 15px; margin: 0; }
-  .status { font-size: 12px; color: var(--muted); }
-  .status.err { color: var(--err); }
-  .status.run::before { content: "●"; color: var(--accent); margin-right: 4px; animation: blink 1s infinite; }
-  @keyframes blink { 50% { opacity: .2; } }
-  #settings { display: none; }
-  #settings.open { display: block; }
-  #settings .row { display: flex; gap: 10px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
-  #settings label { font-size: 13px; color: var(--muted); min-width: 88px; }
-  #apiKey, #baseUrl { flex: 1; min-width: 240px; }
-  #model { width: 240px; }
-  .hint { font-size: 12px; color: var(--muted); }
-  #choiceBar { display: none; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
-  #choiceBar.open { display: flex; }
-  #customChoice { flex: 1; min-width: 200px; }
-  #chatBar { display: none; gap: 8px; margin-top: 12px; }
-  #chatBar.open { display: flex; }
-  #chatInput { flex: 1; }
-  /* markdown */
-  .md h1, .md h2 { font-size: 17px; margin: 18px 0 8px; }
-  .md h3 { font-size: 15.5px; margin: 16px 0 6px; }
-  .md h4 { font-size: 15px; margin: 14px 0 4px; }
-  .md p { margin: 8px 0; }
-  .md hr { border: 0; border-top: 1px solid var(--line); margin: 16px 0; }
-  .md blockquote { margin: 8px 0; padding: 2px 14px; border-left: 3px solid var(--accent); color: var(--muted); }
-  .md code { background: var(--code-bg); border-radius: 4px; padding: 1px 5px; font-size: 13px; }
-  .md pre { background: var(--code-bg); border-radius: 8px; padding: 12px; overflow-x: auto; }
-  .md pre code { background: none; padding: 0; }
-  .md ul, .md ol { margin: 6px 0; padding-left: 24px; }
-  .md li { margin: 3px 0; }
-  .md .tablewrap { overflow-x: auto; margin: 10px 0; }
-  .md table { border-collapse: collapse; font-size: 13.5px; min-width: 100%; }
-  .md th, .md td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
-  .md th { background: var(--code-bg); white-space: nowrap; }
-  .md a { color: var(--accent); }
-  .chip { display: inline-block; font-size: 12px; background: var(--code-bg); border-radius: 999px;
-    padding: 2px 10px; margin-left: 6px; color: var(--muted); }
-  .turn-user { border-left: 3px solid var(--accent); padding-left: 12px; margin: 14px 0 6px; color: var(--muted); font-size: 14px; }
+}
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.65 -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+}
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 10px 18px;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 1px 6px rgba(0,0,0,.05);
+}
+.brand { font-weight: 700; font-size: 16px; color: var(--accent); white-space: nowrap; }
+.brand .sub { font-size: 11px; color: var(--muted); font-weight: 400; margin-left: 6px; }
+.ctrl { display: flex; gap: 8px; align-items: center; flex: 1 1 360px; flex-wrap: wrap; }
+#industryInput {
+  flex: 1 1 200px; min-width: 170px;
+  padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--bg); color: var(--ink); font-size: 14px;
+}
+#industryInput:focus { outline: 2px solid var(--accent2); outline-offset: 1px; }
+.btn {
+  padding: 8px 14px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--card); color: var(--ink); cursor: pointer;
+  font-size: 13.5px; transition: .15s; font-family: inherit;
+}
+.btn:hover { border-color: var(--accent2); color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { filter: brightness(1.1); color: #fff; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.tokens {
+  font-size: 12px; color: var(--muted); white-space: nowrap;
+  font-variant-numeric: tabular-nums; margin-left: auto;
+}
+main { max-width: 880px; margin: 22px auto 90px; padding: 0 16px; display: flex; flex-direction: column; gap: 18px; }
+.card {
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.04); overflow: hidden;
+  scroll-margin-top: 74px;
+}
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 18px 0; flex-wrap: wrap; }
+.card-head h2 { margin: 0; font-size: 16px; }
+.status {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12.5px; color: var(--muted);
+  padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line);
+  white-space: nowrap;
+}
+.status .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: .85; flex: none; }
+.status.running { color: var(--accent); border-color: var(--accent2); }
+.status.running .dot { animation: blink 1s linear infinite; }
+.status.done { color: #1e7a34; border-color: #a5d6a7; }
+.status.error { color: var(--danger); border-color: var(--danger); }
+@keyframes blink { 50% { opacity: .1; } }
+.body { padding: 14px 18px 10px; overflow-wrap: break-word; }
+.body > :first-child { margin-top: 0; }
+.body h1, .body h2, .body h3, .body h4 { margin: 18px 0 8px; line-height: 1.3; }
+.body h1 { font-size: 19px; } .body h2 { font-size: 17px; } .body h3 { font-size: 15.5px; } .body h4 { font-size: 14.5px; }
+.body p { margin: 8px 0; }
+.body ul, .body ol { margin: 8px 0; padding-left: 26px; }
+.body li { margin: 4px 0; }
+.body code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; font-family: Consolas, Menlo, monospace; font-size: 12.5px; }
+.body pre { background: var(--code-bg); border: 1px solid var(--line); padding: 10px 12px; border-radius: 8px; overflow-x: auto; font-size: 12.5px; line-height: 1.5; }
+.body pre code { background: none; padding: 0; }
+.body blockquote {
+  margin: 10px 0; padding: 8px 12px;
+  border-left: 3px solid var(--accent2);
+  background: var(--quote-bg);
+  border-radius: 0 8px 8px 0;
+}
+.body blockquote p { margin: 4px 0; }
+.body hr { border: none; border-top: 1px solid var(--line); margin: 14px 0; }
+.body a { color: var(--accent); }
+.body .table-wrap { overflow-x: auto; margin: 10px 0; border: 1px solid var(--line); border-radius: 8px; }
+.body table { border-collapse: collapse; width: 100%; min-width: 480px; font-size: 13px; }
+.body th, .body td { border: 1px solid var(--line); padding: 6px 9px; text-align: left; vertical-align: top; }
+.body th { background: var(--code-bg); font-weight: 600; white-space: nowrap; }
+.actions { padding: 0 18px 14px; display: flex; flex-direction: column; gap: 10px; }
+.cand-box { display: flex; flex-direction: column; gap: 8px; }
+.cand-hint { font-size: 12.5px; color: var(--muted); }
+.cand-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn.cand { background: var(--quote-bg); border-color: var(--accent2); max-width: 100%; }
+.btn.cand:hover { background: var(--accent); color: #fff; }
+.cand-input { width: 100%; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); }
+.retry-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.notice { font-size: 12.5px; color: var(--danger); }
+.chat-input-row { padding: 10px 18px 16px; border-top: 1px dashed var(--line); }
+.chat-input { width: 100%; padding: 10px 14px; border: 1px solid var(--accent2); border-radius: 10px; background: var(--bg); color: var(--ink); font-size: 14px; font-family: inherit; }
+.chat-input:focus { outline: 2px solid var(--accent2); outline-offset: 1px; }
+.chat-input:disabled { opacity: .5; }
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.35);
+  display: flex; align-items: center; justify-content: center; z-index: 100;
+}
+.panel {
+  width: min(480px, 92vw); background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  padding: 20px 22px; display: flex; flex-direction: column; gap: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,.2); max-height: 90vh; overflow-y: auto;
+}
+.panel h3 { margin: 0; }
+.panel label { display: flex; flex-direction: column; gap: 5px; font-size: 13px; color: var(--muted); }
+.panel input[type=text], .panel input[type=password], .panel input[type=number], .panel select {
+  padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--bg); color: var(--ink); font-size: 13.5px;
+}
+.panel .check { flex-direction: row; align-items: center; gap: 8px; }
+.key-note { font-size: 11.5px; color: var(--muted); }
+.panel-btns { display: flex; gap: 8px; justify-content: flex-end; }
+.test-result { margin-top: 10px; white-space: pre-wrap; word-break: break-all; line-height: 1.5; }
+.toast-wrap { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 200; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
+.toast {
+  background: var(--ink); color: var(--bg); padding: 8px 16px; border-radius: 999px;
+  font-size: 13px; box-shadow: 0 4px 14px rgba(0,0,0,.25); animation: rise .2s ease;
+}
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
 </style>
 </head>
 <body>
-<header>
-  <div class="bar">
-    <h1>行业分析工作台</h1>
-    <input id="industry" type="text" placeholder="输入行业名称，例如：媒体行业 / 骨科耗材 / 县域客运">
-    <button id="startBtn">开始分析</button>
-    <button id="stopBtn" class="ghost" disabled>停止</button>
-    <button id="exportBtn" class="ghost" disabled>导出 .md</button>
-    <button id="gearBtn" class="ghost">⚙ 设置</button>
-    <span id="usage"></span>
+
+<header class="topbar">
+  <div class="brand">行业分析工作台<span class="sub">五步证据链 · 直连 Claude API</span></div>
+  <div class="ctrl">
+    <input id="industryInput" type="text" placeholder="输入行业名称，如：体外诊断试剂">
+    <button id="btnStart" class="btn primary">开始分析</button>
+    <button id="btnStop" class="btn" disabled>停止</button>
+    <button id="btnExport" class="btn">导出 .md</button>
+    <button id="btnSettings" class="btn">⚙ 设置</button>
   </div>
+  <div id="tokenUsage" class="tokens" title="累计 token 用量（输入 + 输出）">输入 0 · 输出 0</div>
 </header>
-<main>
-  <div id="settings" class="card">
-    <div class="row"><label>API 地址</label>
-      <input id="baseUrl" type="text" placeholder="留空 = 官方 https://api.anthropic.com；三方平台填其地址，如 https://api.cherryin.ai">
+
+<main id="main"></main>
+
+<div id="settingsOverlay" class="overlay" hidden>
+  <div class="panel">
+    <h3>⚙ 设置</h3>
+    <label>API 地址<input id="setBase" type="text" placeholder="https://api.anthropic.com"></label>
+    <label>API Key<input id="setKey" type="password" placeholder="sk-ant-… / sk-…" autocomplete="off"></label>
+    <div class="key-note">Key 仅保存在本机浏览器（localStorage），只会随请求发送到你填写的 API 地址。</div>
+    <label>模型<input id="setModel" type="text" list="modelList" placeholder="claude-opus-5"></label>
+    <datalist id="modelList">
+      <option value="claude-opus-5">
+      <option value="claude-sonnet-4-5">
+      <option value="claude-haiku-4-5">
+      <option value="anthropic/claude-opus-5">
+      <option value="anthropic/claude-sonnet-4-5">
+      <option value="anthropic/claude-haiku-4-5">
+      <option value="anthropic/claude-sonnet-4.5">
+      <option value="anthropic/claude-haiku-4.5">
+      <option value="anthropic/claude-3-5-haiku-20241022">
+      <option value="deepseek-chat">
+      <option value="deepseek-reasoner">
+    </datalist>
+    <label>认证方式<select id="setAuth">
+      <option value="auto">自动（Anthropic 官方 x-api-key / 其余 Bearer）</option>
+      <option value="x-api-key">强制 x-api-key</option>
+      <option value="bearer">强制 Authorization: Bearer</option>
+    </select></label>
+    <label>API 协议<select id="setProtocol">
+      <option value="auto">自动检测（deepseek.com → OpenAI 兼容）</option>
+      <option value="anthropic">Anthropic Messages（Claude 官方 / 兼容网关）</option>
+      <option value="openai">OpenAI 兼容（DeepSeek 等）</option>
+    </select></label>
+    <div id="setProtocolNote" class="key-note"></div>
+    <label class="check"><input type="checkbox" id="setWeb"> 联网核实（web_search 工具，最大 12 次）</label>
+    <div id="setWebNote" class="key-note" hidden>OpenAI 兼容协议（DeepSeek 原生 API）不提供服务端 web_search 检索：联网核实将被忽略，系统 prompt 会自动把 A 档降级为 B 档并注明"凭记忆，未核实"。</div>
+    <label>max_tokens<input id="setMax" type="number" min="1" step="1" value="64000"></label>
+    <div class="key-note">Anthropic 默认 64000；OpenAI 兼容协议（DeepSeek）自动按上限 8192 发送。三方平台若对参数报 400，会按需自动剥离参数重试。</div>
+    <div class="panel-btns" style="justify-content: space-between; align-items: center;">
+      <button id="btnTest" class="btn" type="button">测试连接</button>
+      <span>
+        <button id="setSave" class="btn primary">保存</button>
+        <button id="setCancel" class="btn">关闭</button>
+      </span>
     </div>
-    <div class="row"><label>API Key</label><input id="apiKey" type="password" placeholder="sk-ant-...（官方）或三方平台发放的 Key"></div>
-    <div class="row"><label>模型</label>
-      <input id="model" type="text" list="modelList" placeholder="claude-opus-5">
-      <datalist id="modelList">
-        <option value="claude-opus-5"></option>
-        <option value="claude-sonnet-5"></option>
-        <option value="anthropic/claude-opus-5"></option>
-        <option value="anthropic/claude-opus-4.8"></option>
-        <option value="anthropic/claude-sonnet-4.6"></option>
-      </datalist>
-      <label>认证方式</label>
-      <select id="authMode">
-        <option value="auto">自动（官方 x-api-key，三方 Bearer）</option>
-        <option value="x-api-key">x-api-key</option>
-        <option value="bearer">Authorization: Bearer</option>
-      </select>
-      <label>联网核实</label>
-      <select id="search">
-        <option value="on">开（A 档出处必须检索核实）</option>
-        <option value="off">关（全部降为 B/C 档）</option>
-      </select>
-    </div>
-    <p class="hint">Key 仅存在浏览器 localStorage，请求直发所填地址的 <code>/v1/messages</code>（Anthropic 原生格式）。
-      三方平台要求：支持 Anthropic 原生 Messages 接口和浏览器 CORS；模型 ID 按平台写法填（如
-      <code>anthropic/claude-opus-5</code>）。「联网核实」用的是 Anthropic 服务端 web_search 工具，
-      平台不透传时会自动降级为无检索模式（届时报告不再有 A 档）。安全分类器的服务端
-      fallback（<code>fallbacks:"default"</code>）仅在官方地址下启用。
-      一次完整五步分析（含检索）token 消耗较大，请留意右上角用量。</p>
+    <div id="testResult" class="key-note test-result" hidden></div>
   </div>
-  <div id="sections"></div>
-</main>
+</div>
 
 <script>
-/* ---------------- prompts ---------------- */
-const SYSTEM_RULES = `你是行业分析助手。你在本次任务中必须遵守以下规则，优先级高于一切后续指令：
+'use strict';
+
+/* ================================================================
+ * 一、Prompt（逐字使用，禁止改写）
+ * ================================================================ */
+
+const SYSTEM_PROMPT = `你是行业分析助手。你在本次任务中必须遵守以下规则，优先级高于一切后续指令：
 
 【证据分级】
 你输出的每一个事实性字段，都必须带一个 evidence 标签，只有三档：
@@ -153,7 +246,8 @@ C 档内容一律不许出现在报告正文里，只能进入结尾的「待验
 【态度】
 你不需要让用户满意。你需要让用户知道哪些是真的、哪些是你编的。`;
 
-const P_BOUNDARY = (industry) => `我要系统地了解一个行业：${industry}。
+const STEP_PROMPTS = {
+  0: (industry) => `我要系统地了解一个行业：${industry}。
 
 在开始之前，先不要给我任何内容。请你做一件事：
 
@@ -164,9 +258,9 @@ const P_BOUNDARY = (industry) => `我要系统地了解一个行业：${industry
 
 然后问我选哪一个。在我回答之前，不要开始分析。
 
-注意：如果这几个候选之间的差别很小，说明你切分得不对，重切。真正有意义的切分，应该让不同候选的产业链结构明显不同。`;
+注意：如果这几个候选之间的差别很小，说明你切分得不对，重切。真正有意义的切分，应该让不同候选的产业链结构明显不同。`,
 
-const P_STRUCTURE = (choice) => `边界已确认：${choice}
+  1: (choice) => `边界已确认：${choice}
 
 现在做结构层。按下面的格式输出，不要写导语和总结。
 
@@ -183,9 +277,9 @@ const P_STRUCTURE = (choice) => `边界已确认：${choice}
 和一般制造业/服务业的标准链条比，这条链多了哪一环、少了哪一环、或者哪一环的位置不一样？只写差异，不写共性。
 
 【我可能画错的地方】
-你在分层时做了哪 3 个判断是可能错的？逐条列出。`;
+你在分层时做了哪 3 个判断是可能错的？逐条列出。`,
 
-const P_FLOWS = `基于上面的产业链，现在拆三条流转链。三条分开输出，不要合并。
+  2: () => `基于上面的产业链，现在拆三条流转链。三条分开输出，不要合并。
 
 【钱流】
 从最终用户付出的 100 元开始，追踪它依次经过哪些环节。每一跳一行：
@@ -209,9 +303,9 @@ const P_FLOWS = `基于上面的产业链，现在拆三条流转链。三条分
   「决策者 / 付钱的 / 使用的」三者是否分离，是这个行业的一个关键特征，必须明确回答是或否。
 
 【三条链的错位】
-三条链在哪一环出现了错位（控制权、资金、使用权不在同一方手里）？错位的地方通常就是这个行业的矛盾和机会所在，逐条指出。`;
+三条链在哪一环出现了错位（控制权、资金、使用权不在同一方手里）？错位的地方通常就是这个行业的矛盾和机会所在，逐条指出。`,
 
-const P_POWER = `现在分析议价能力。
+  3: () => `现在分析议价能力。
 
 严格禁止使用以下表述：议价能力较强 / 较弱 / 相对集中 / 比较分散 / 处于优势地位 / 话语权较大。这些说法对任何行业都成立，等于没说。
 
@@ -242,9 +336,9 @@ const P_POWER = `现在分析议价能力。
 在这条产业链上，利润最终沉淀在哪一环？为什么是这一环而不是别的？用上面五个答案来论证，不许引入新的理由。
 
 【最脆弱的一环】
-哪一环的议价权最容易在未来两年内被削弱？触发条件是什么？标注 evidence，如果是 C 档就明说这是推测。`;
+哪一环的议价权最容易在未来两年内被削弱？触发条件是什么？标注 evidence，如果是 C 档就明说这是推测。`,
 
-const P_TACIT = `最后一层。注意：这一层的规则和前面三层完全不同。
+  4: () => `最后一层。注意：这一层的规则和前面三层完全不同。
 
 这三类信息在公开资料里极少存在，你大概率不知道。因此本步骤中：
 - 你不许输出结论
@@ -274,9 +368,9 @@ const P_TACIT = `最后一层。注意：这一层的规则和前面三层完全
 【结尾必须输出：你还不知道的 10 件事】
 这份报告读完之后，我最可能产生的错觉是什么？明确列出 10 件"这份报告没有回答、但对判断这个行业很关键"的事。
 
-这一屏是整个任务里最重要的部分。不要客气，不要为了让报告显得完整而缩短这个清单。`;
+这一屏是整个任务里最重要的部分。不要客气，不要为了让报告显得完整而缩短这个清单。`,
 
-const P_ROLEPLAY = `上面是我们一起做出的行业分析。现在切换角色。
+  5: () => `上面是我们一起做出的行业分析。现在切换角色。
 
 你是一位在这个行业干了 12 年的从业者。我是一个刚接触这个行业、读了一些资料就来找你聊的人。
 
@@ -292,396 +386,1377 @@ const P_ROLEPLAY = `上面是我们一起做出的行业分析。现在切换角
   - 我哪几处用词暴露了我是外行（原句 + 内行会怎么说）
   - 如果我只能再补 3 块知识，应该补哪 3 块
 
-现在由你先开口，提出第一个问题。`;
-
-const STEPS = [
-  { id: "structure", title: "Step 1 · 结构层：产业链分层", prompt: null /* filled with choice */ },
-  { id: "flows",     title: "Step 2 · 三条流转链：钱流 / 货流 / 用户流", prompt: P_FLOWS },
-  { id: "power",     title: "Step 3 · 议价能力（可验证的量）", prompt: P_POWER },
-  { id: "tacit",     title: "Step 4 · 约束 / 节奏 / 异常 + 你还不知道的 10 件事", prompt: P_TACIT },
-];
-
-/* ---------------- state ---------------- */
-const $ = (id) => document.getElementById(id);
-const state = {
-  convo: [],            // [{role, content}]
-  running: false,
-  abort: null,
-  usage: { in: 0, out: 0 },
-  sections: [],         // {id, title, el, mdEl, statusEl, text}
-  chatRounds: 0,
+现在由你先开口，提出第一个问题。`
 };
 
-$("apiKey").value = localStorage.getItem("ia_key") || "";
-$("baseUrl").value = localStorage.getItem("ia_base") || "";
-$("model").value = localStorage.getItem("ia_model") || "claude-opus-5";
-$("authMode").value = localStorage.getItem("ia_auth") || "auto";
-$("search").value = localStorage.getItem("ia_search") || "on";
-$("apiKey").addEventListener("change", () => localStorage.setItem("ia_key", $("apiKey").value.trim()));
-$("baseUrl").addEventListener("change", () => localStorage.setItem("ia_base", $("baseUrl").value.trim()));
-$("model").addEventListener("change", () => localStorage.setItem("ia_model", $("model").value.trim()));
-$("authMode").addEventListener("change", () => localStorage.setItem("ia_auth", $("authMode").value));
-$("search").addEventListener("change", () => localStorage.setItem("ia_search", $("search").value));
-$("gearBtn").addEventListener("click", () => $("settings").classList.toggle("open"));
-if (!$("apiKey").value) $("settings").classList.add("open");
+const STEP_META = [
+  { n: 0, title: 'Step 0 · 边界切分' },
+  { n: 1, title: 'Step 1 · 结构层' },
+  { n: 2, title: 'Step 2 · 三条流转链' },
+  { n: 3, title: 'Step 3 · 议价能力' },
+  { n: 4, title: 'Step 4 · 约束 / 节奏 / 异常' },
+  { n: 5, title: 'Step 5 · 从业者拷问' }
+];
 
-/* ---------------- markdown ---------------- */
-function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
-function inline(s) {
-  return s
-    .replace(/`([^`]+)`/g, (_, c) => "<code>" + c + "</code>")
-    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-    .replace(/\[([^\]]+)\]\((https?:[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+/* ================================================================
+ * 二、设置（localStorage）
+ * ================================================================ */
+
+const DEFAULT_SETTINGS = { base: 'https://api.anthropic.com', key: '', model: 'claude-opus-5', auth: 'auto', web: true, maxTokens: 64000, protocol: 'auto' };
+const LS_KEY = 'industry-workbench-settings';
+
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) return Object.assign({}, DEFAULT_SETTINGS, JSON.parse(raw));
+  } catch (e) { /* ignore */ }
+  return Object.assign({}, DEFAULT_SETTINGS);
 }
-function mdToHtml(src) {
-  const lines = src.split("\n");
-  let out = [], i = 0, list = null;
-  const closeList = () => { if (list) { out.push(list === "ul" ? "</ul>" : "</ol>"); list = null; } };
-  while (i < lines.length) {
+function saveSettings() { localStorage.setItem(LS_KEY, JSON.stringify(settings)); }
+function cleanBase(b) { return String(b || '').trim().replace(/\/+$/, ''); }
+function isOfficial(base) {
+  try {
+    const h = new URL(cleanBase(base)).hostname;
+    return h === 'api.anthropic.com' || h.endsWith('.anthropic.com');
+  } catch (e) {
+    return /anthropic\.com$/.test(cleanBase(base));
+  }
+}
+/* Anthropic Messages 端点：兼容三种 base 写法（host 根 / 已含 /v1 / 已含 /v1/messages） */
+function messagesUrl(base) {
+  const b = cleanBase(base);
+  if (/\/v1\/messages$/i.test(b)) return b;
+  if (/\/v1$/i.test(b)) return b + '/messages';
+  return b + '/v1/messages';
+}
+/* OpenAI 兼容端点：兼容三种 base 写法 */
+function openaiUrl(base) {
+  const b = cleanBase(base);
+  if (/\/chat\/completions$/i.test(b)) return b;
+  if (/\/v1$/i.test(b)) return b + '/chat/completions';
+  return b + '/v1/chat/completions';
+}
+/* 协议检测：auto 时按主机名推断；deepseek 系 → OpenAI 兼容，其余 → Anthropic Messages */
+function detectProtocol(base) {
+  try {
+    const h = new URL(cleanBase(base)).hostname;
+    if (h.includes('deepseek')) return 'openai';
+  } catch (e) { /* fallthrough */ }
+  return 'anthropic';
+}
+function effectiveProtocol() {
+  const p = settings.protocol;
+  return (p === 'openai' || p === 'anthropic') ? p : detectProtocol(settings.base);
+}
+let settings = loadSettings();
+
+/* ================================================================
+ * 三、全局状态
+ * ================================================================ */
+
+let state = { industry: '', choice: null, session: [], tokens: { in: 0, out: 0 }, chatRound: 0, chatBusy: false, chatDone: false, gen: 0 };
+let sections = {};          // n -> { n, card, rawText, toolCount }
+let currentAbort = null;    // 当前请求的 AbortController
+
+const $ = (id) => document.getElementById(id);
+const mainEl = $('main');
+const industryInput = $('industryInput');
+
+const MAX_RETRIES = 2;          // 断流重试次数
+const MAX_PAUSE_CONT = 10;      // pause_turn 最大续传次数
+const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504, 529]);
+
+/* ================================================================
+ * 四、轻量 Markdown 渲染器（先转义，再处理；流式 rAF 节流）
+ * ================================================================ */
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function inlineFormat(s) {
+  let out = escapeHtml(s);
+  out = out.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+  out = out.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+  out = out.replace(/\[([^\]\n]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  return out;
+}
+
+function splitCells(row) {
+  let s = String(row).trim();
+  if (s.startsWith('|')) s = s.slice(1);
+  if (s.endsWith('|')) s = s.slice(0, -1);
+  return s.split('|').map((c) => c.trim());
+}
+
+function isSepRow(line) {
+  const cells = splitCells(line);
+  return cells.length >= 1 && cells.every((c) => /^:?-{3,}:?$/.test(c));
+}
+
+function parseMd(md) {
+  if (!md) return '';
+  const lines = String(md).replace(/\r\n/g, '\n').split('\n');
+  let html = '';
+  let i = 0;
+  const n = lines.length;
+  const para = [];
+  const flushPara = () => {
+    if (para.length) { html += '<p>' + para.map(inlineFormat).join('<br>') + '</p>'; para.length = 0; }
+  };
+  while (i < n) {
     const raw = lines[i];
-    const line = raw.trimEnd();
-    if (/^```/.test(line)) {
-      closeList(); const buf = []; i++;
-      while (i < lines.length && !/^```/.test(lines[i])) { buf.push(lines[i]); i++; }
-      i++; out.push("<pre><code>" + esc(buf.join("\n")) + "</code></pre>"); continue;
+    const t = raw.trim();
+    /* 围栏代码块 */
+    if (/^```/.test(t)) {
+      flushPara();
+      const lang = t.slice(3).trim();
+      const code = [];
+      i++;
+      while (i < n && !/^```/.test(lines[i].trim())) { code.push(lines[i]); i++; }
+      if (i < n) i++;
+      html += '<pre><code' + (lang ? ' class="lang-' + escapeHtml(lang) + '"' : '') + '>' + escapeHtml(code.join('\n')) + '</code></pre>';
+      continue;
     }
-    if (/^\s*\|.*\|\s*$/.test(line) && i + 1 < lines.length && /^\s*\|?[\s:|-]+\|?\s*$/.test(lines[i + 1]) && lines[i + 1].includes("-")) {
-      closeList();
-      const rows = [line]; i += 2;
-      while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) { rows.push(lines[i]); i++; }
-      const cells = (r) => r.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => inline(esc(c.trim())));
-      let t = '<div class="tablewrap"><table><thead><tr>';
-      t += cells(rows[0]).map((c) => "<th>" + c + "</th>").join("") + "</tr></thead><tbody>";
-      for (let r = 1; r < rows.length; r++) t += "<tr>" + cells(rows[r]).map((c) => "<td>" + c + "</td>").join("") + "</tr>";
-      out.push(t + "</tbody></table></div>"); continue;
+    /* 标题 # ~ #### */
+    const hm = t.match(/^(#{1,4})\s+(.+)$/);
+    if (hm) {
+      flushPara();
+      html += '<h' + hm[1].length + '>' + inlineFormat(hm[2]) + '</h' + hm[1].length + '>';
+      i++;
+      continue;
     }
-    let m;
-    if ((m = line.match(/^(#{1,4})\s+(.*)$/))) { closeList(); out.push(`<h${m[1].length}>` + inline(esc(m[2])) + `</h${m[1].length}>`); }
-    else if (/^(-{3,}|\*{3,})$/.test(line.trim())) { closeList(); out.push("<hr>"); }
-    else if ((m = line.match(/^>\s?(.*)$/))) { closeList(); out.push("<blockquote>" + inline(esc(m[1])) + "</blockquote>"); }
-    else if ((m = line.match(/^\s*[-*]\s+(.*)$/))) { if (list !== "ul") { closeList(); out.push("<ul>"); list = "ul"; } out.push("<li>" + inline(esc(m[1])) + "</li>"); }
-    else if ((m = line.match(/^\s*(\d+)[.、]\s+(.*)$/))) { if (list !== "ol") { closeList(); out.push("<ol>"); list = "ol"; } out.push(`<li value="${m[1]}">` + inline(esc(m[2])) + "</li>"); }
-    else if (line.trim() === "") { closeList(); }
-    else { closeList(); out.push("<p>" + inline(esc(line)) + "</p>"); }
+    /* 分割线 */
+    if (/^(-{3,}|\*{3,}|_{3,})\s*$/.test(t)) {
+      flushPara();
+      html += '<hr>';
+      i++;
+      continue;
+    }
+    /* 引用 */
+    if (t.startsWith('>')) {
+      flushPara();
+      const q = [];
+      while (i < n && lines[i].trim().startsWith('>')) {
+        q.push(lines[i].replace(/^>\s?/, ''));
+        i++;
+      }
+      html += '<blockquote>' + q.map(inlineFormat).join('<br>') + '</blockquote>';
+      continue;
+    }
+    /* 有序列表：保留原始序号，且容忍项之间的空行 */
+    const om = t.match(/^(\d{1,4})[.、．)\]]\s+(.*)$/);
+    if (om) {
+      flushPara();
+      html += '<ol>';
+      while (i < n) {
+        const lt = lines[i].trim();
+        const mm = lt.match(/^(\d{1,4})[.、．)\]]\s+(.*)$/);
+        if (mm) {
+          html += '<li value="' + mm[1] + '">' + inlineFormat(mm[2]) + '</li>';
+          i++;
+        } else if (lt === '' && i + 1 < n && /^\d{1,4}[.、．)\]]\s+/.test(lines[i + 1].trim())) {
+          i++; /* 跳过列表内部空行 */
+        } else break;
+      }
+      html += '</ol>';
+      continue;
+    }
+    /* 无序列表 */
+    if (/^[-*+]\s+/.test(t)) {
+      flushPara();
+      html += '<ul>';
+      while (i < n) {
+        const lt = lines[i].trim();
+        const mm = lt.match(/^[-*+]\s+(.*)$/);
+        if (mm) {
+          html += '<li>' + inlineFormat(mm[1]) + '</li>';
+          i++;
+        } else if (lt === '' && i + 1 < n && /^[-*+]\s+/.test(lines[i + 1].trim())) {
+          i++;
+        } else break;
+      }
+      html += '</ul>';
+      continue;
+    }
+    /* 表格 */
+    if (t.startsWith('|')) {
+      const rows = [];
+      let j = i;
+      while (j < n && lines[j].trim().startsWith('|')) { rows.push(lines[j].trim()); j++; }
+      let sep = -1;
+      for (let k = 1; k < rows.length; k++) { if (isSepRow(rows[k])) { sep = k; break; } }
+      if (sep > 0) {
+        flushPara();
+        const headCells = splitCells(rows[0]);
+        html += '<div class="table-wrap"><table><thead><tr>';
+        for (const c of headCells) html += '<th>' + inlineFormat(c) + '</th>';
+        html += '</tr></thead><tbody>';
+        for (let k = sep + 1; k < rows.length; k++) {
+          const cells = splitCells(rows[k]);
+          html += '<tr>';
+          for (let c = 0; c < headCells.length; c++) {
+            html += '<td>' + inlineFormat(cells[c] !== undefined ? cells[c] : '') + '</td>';
+          }
+          html += '</tr>';
+        }
+        html += '</tbody></table></div>';
+        i = j;
+        continue;
+      }
+      para.push(t);
+      i++;
+      continue;
+    }
+    /* 空行 */
+    if (t === '') { flushPara(); i++; continue; }
+    /* 普通段落 */
+    para.push(t);
     i++;
   }
-  closeList();
-  return out.join("\n");
+  flushPara();
+  return html;
 }
 
-/* ---------------- UI helpers ---------------- */
-function addSection(id, title) {
-  const card = document.createElement("div");
-  card.className = "card";
-  card.innerHTML = `<div class="head"><h2>${esc(title)}</h2><span class="status"></span></div><div class="md"></div>`;
-  $("sections").appendChild(card);
-  const sec = { id, title, el: card, mdEl: card.querySelector(".md"), statusEl: card.querySelector(".status"), text: "", searches: 0 };
-  state.sections.push(sec);
-  card.scrollIntoView({ behavior: "smooth", block: "start" });
-  return sec;
+const pendingRenders = new Set();
+function scheduleRender(n) {
+  if (pendingRenders.has(n)) return;
+  pendingRenders.add(n);
+  requestAnimationFrame(() => {
+    pendingRenders.delete(n);
+    const sec = sections[n];
+    if (!sec || !sec.card) return;
+    const bodyEl = sec.card.querySelector('.body');
+    if (bodyEl) bodyEl.innerHTML = parseMd(sec.rawText);
+  });
 }
-let renderPending = null;
-function renderSec(sec) {
-  if (renderPending) return;
-  renderPending = requestAnimationFrame(() => { renderPending = null; sec.mdEl.innerHTML = mdToHtml(sec.text); });
-}
-function setStatus(sec, txt, cls) { sec.statusEl.textContent = txt; sec.statusEl.className = "status " + (cls || ""); }
-function updateUsage() { $("usage").textContent = `in ${state.usage.in.toLocaleString()} / out ${state.usage.out.toLocaleString()} tok`; }
 
-/* ---------------- API ---------------- */
-function apiCfg() {
-  const base = ($("baseUrl").value.trim() || "https://api.anthropic.com").replace(/\/+$/, "");
-  const official = /^https:\/\/api\.anthropic\.com$/.test(base);
-  let mode = $("authMode").value;
-  if (mode === "auto") mode = official ? "x-api-key" : "bearer";
-  const headers = { "content-type": "application/json", "anthropic-version": "2023-06-01" };
-  const key = $("apiKey").value.trim();
-  if (mode === "bearer") headers["Authorization"] = "Bearer " + key;
-  else headers["x-api-key"] = key;
-  if (official) {
-    headers["anthropic-beta"] = "server-side-fallback-2026-07-01";
-    headers["anthropic-dangerous-direct-browser-access"] = "true";
+/* ================================================================
+ * 五、API 层：SSE 解析 / 参数剥离 / 断流重试
+ * ================================================================ */
+
+function deepCopy(o) {
+  if (typeof structuredClone === 'function') {
+    try { return structuredClone(o); } catch (e) { /* fallthrough */ }
   }
-  return { url: base + "/v1/messages", headers, official };
+  return JSON.parse(JSON.stringify(o));
 }
-function buildBody(messages, official) {
+
+function abortError() {
+  try { return new DOMException('Aborted', 'AbortError'); }
+  catch (e) { const err = new Error('Aborted'); err.name = 'AbortError'; return err; }
+}
+function isAbort(e) { return e && e.name === 'AbortError'; }
+
+function sleep(ms, signal) {
+  return new Promise((resolve, reject) => {
+    if (signal && signal.aborted) { reject(abortError()); return; }
+    const timer = setTimeout(done, ms);
+    function done() { cleanup(); resolve(); }
+    function onAbort() { clearTimeout(timer); cleanup(); reject(abortError()); }
+    function cleanup() { if (signal) signal.removeEventListener('abort', onAbort); }
+    if (signal) signal.addEventListener('abort', onAbort, { once: true });
+  });
+}
+
+function buildAuth(s, official) {
+  const useX = s.auth === 'x-api-key' || (s.auth === 'auto' && official);
+  return useX ? { 'x-api-key': s.key } : { 'authorization': 'Bearer ' + s.key };
+}
+function buildHeaders(s, official) {
+  const h = Object.assign({ 'content-type': 'application/json', 'anthropic-version': '2023-06-01' }, buildAuth(s, official));
+  if (official) {
+    h['anthropic-dangerous-direct-browser-access'] = 'true';
+    h['anthropic-beta'] = 'server-side-fallback-2026-07-01';
+  }
+  return h;
+}
+function buildOpenAIHeaders(s) {
+  return Object.assign({ 'content-type': 'application/json' }, buildAuth(s, false));
+}
+
+function buildBody(s, messages, stripped, official) {
   const body = {
-    model: $("model").value.trim() || "claude-opus-5",
-    max_tokens: 64000,
+    model: s.model,
+    max_tokens: Math.max(1, Number(s.maxTokens) || 64000),
     stream: true,
-    system: SYSTEM_RULES,
-    cache_control: { type: "ephemeral" },
-    messages,
+    system: stripped.cache ? SYSTEM_PROMPT : [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
+    messages: messages
   };
-  if (official) body.fallbacks = "default"; // 安全分类器 fallback，仅官方端点支持
-  if ($("search").value === "on") body.tools = [{ type: "web_search_20260209", name: "web_search", max_uses: 12 }];
+  if (s.web && !stripped.tools) body.tools = [{ type: 'web_search_20260209', name: 'web_search', max_uses: 12 }];
+  if (official && !stripped.fallbacks) body.fallbacks = 'default';
   return body;
 }
 
-async function streamOnce(messages, sec, signal) {
-  const cfg = apiCfg();
-  const body = buildBody(messages, cfg.official);
-  let res;
-  // 三方网关可能不认识可选参数：400 时按序剥离并重试，每个参数最多剥离一次
-  for (;;) {
-    res = await fetch(cfg.url, { method: "POST", signal, headers: cfg.headers, body: JSON.stringify(body) });
-    if (res.status !== 400) break;
-    const err = await res.json().catch(() => null);
-    const msg = err?.error?.message || JSON.stringify(err?.error || err) || "";
-    if (body.fallbacks !== undefined && /fallback/i.test(msg)) { delete body.fallbacks; continue; }
-    if (body.cache_control !== undefined && /cache_control/i.test(msg)) { delete body.cache_control; continue; }
-    if (body.tools !== undefined && /(tools?|web_search)/i.test(msg)) {
-      delete body.tools;
-      setStatus(sec, "该平台不支持服务端检索工具，已降级为无检索模式（本步不再有 A 档）", "err");
-      continue;
-    }
-    throw new Error("API 400: " + msg);
-  }
-  if (!res.ok) {
-    const err = await res.json().catch(() => null);
-    throw new Error(`API ${res.status}: ` + (err?.error?.message || res.statusText));
-  }
-
-  const blocks = [];
-  let stopReason = null;
-  const reader = res.body.getReader();
-  const dec = new TextDecoder();
-  let buf = "";
-  const handle = (p) => {
-    switch (p.type) {
-      case "message_start": {
-        const u = p.message.usage || {};
-        state.usage.in += (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0);
-        updateUsage(); break;
-      }
-      case "content_block_start": {
-        const b = JSON.parse(JSON.stringify(p.content_block));
-        blocks[p.index] = b;
-        if (b.type === "server_tool_use") { b._partial = ""; setStatus(sec, `检索中…（第 ${++sec.searches} 次）`, "run"); }
-        if (b.type === "web_search_tool_result") setStatus(sec, `已检索 ${sec.searches} 次，继续生成…`, "run");
-        break;
-      }
-      case "content_block_delta": {
-        const b = blocks[p.index]; if (!b) break;
-        const d = p.delta;
-        if (d.type === "text_delta") { b.text = (b.text || "") + d.text; sec.text += d.text; renderSec(sec); }
-        else if (d.type === "input_json_delta") { b._partial = (b._partial || "") + d.partial_json; }
-        else if (d.type === "thinking_delta") { b.thinking = (b.thinking || "") + d.thinking; }
-        else if (d.type === "signature_delta") { b.signature = (b.signature || "") + d.signature; }
-        break;
-      }
-      case "content_block_stop": {
-        const b = blocks[p.index];
-        if (b && b._partial !== undefined) { try { b.input = JSON.parse(b._partial || "{}"); } catch (e) {} delete b._partial; }
-        break;
-      }
-      case "message_delta": {
-        stopReason = p.delta?.stop_reason || stopReason;
-        if (p.usage?.output_tokens) { state.usage.out += p.usage.output_tokens; updateUsage(); }
-        break;
-      }
-      case "error": throw new Error("stream error: " + (p.error?.message || JSON.stringify(p.error)));
-    }
-  };
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buf += dec.decode(value, { stream: true });
-    let idx;
-    while ((idx = buf.indexOf("\n\n")) !== -1) {
-      const chunk = buf.slice(0, idx); buf = buf.slice(idx + 2);
-      let data = null;
-      for (const ln of chunk.split("\n")) if (ln.startsWith("data:")) data = ln.slice(5).trim();
-      if (!data) continue;
-      handle(JSON.parse(data));
-    }
-  }
-  return { blocks: blocks.filter(Boolean), stopReason };
-}
-
-// Transient-failure wrapper: on network drop / 5xx / 429 / mid-stream error,
-// roll the section text back to the checkpoint and retry the whole request.
-async function streamWithRetry(messages, sec, signal) {
-  const ckText = sec.text, ckSearches = sec.searches;
-  const MAX_RETRY = 2;
-  for (let attempt = 0; ; attempt++) {
+async function readErrText(resp) {
+  try {
+    const txt = await resp.text();
     try {
-      return await streamOnce(messages, sec, signal);
+      const j = JSON.parse(txt);
+      if (j && j.error) return (j.error.message || txt);
+    } catch (e) { /* not json */ }
+    return txt;
+  } catch (e) { return 'HTTP ' + resp.status; }
+}
+
+/* 400 参数剥离：每个参数最多剥一次 */
+function stripParam(txt, stripped) {
+  if (!stripped.fallbacks && /fallback/i.test(txt)) return 'fallbacks';
+  if (!stripped.cache && /cache_control|ephemeral/i.test(txt)) return 'cache';
+  if (!stripped.tools && /web_search|tools|tool/i.test(txt)) return 'tools';
+  return null;
+}
+
+function concatBytes(chunks) {
+  const total = chunks.reduce((a, c) => a + c.length, 0);
+  const out = new Uint8Array(total);
+  let off = 0;
+  for (const c of chunks) { out.set(c, off); off += c.length; }
+  return out;
+}
+
+function finalizeBlocks(blocks) {
+  for (const b of blocks) {
+    if (!b) continue;
+    if ((b.type === 'tool_use' || b.type === 'server_tool_use') && b.partial_json !== undefined) {
+      try { b.input = JSON.parse(b.partial_json); } catch (e) { b.input = {}; }
+      delete b.partial_json;
+    }
+  }
+}
+
+function handleEvent(ev, ctx, cb) {
+  switch (ev.type) {
+    case 'message_start': {
+      const u = (ev.message && ev.message.usage) || {};
+      const input = (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0);
+      ctx.lastOutput = 0;
+      if (cb.onUsage) cb.onUsage({ input: input, output: 0 });
+      break;
+    }
+    case 'content_block_start': {
+      const i = ev.index;
+      while (ctx.blocks.length <= i) ctx.blocks.push(null);
+      const blk = deepCopy(ev.content_block);
+      ctx.blocks[i] = blk;
+      ctx.startedBlocks++;
+      if (blk.type === 'server_tool_use' || (blk.type === 'tool_use' && blk.name === 'web_search')) {
+        if (cb.onToolStart) cb.onToolStart(blk);
+      }
+      break;
+    }
+    case 'content_block_delta': {
+      const blk = ctx.blocks[ev.index];
+      if (!blk) break;
+      const d = ev.delta || {};
+      if (d.type === 'text_delta') { blk.text = (blk.text || '') + d.text; if (cb.onText) cb.onText(d.text); }
+      else if (d.type === 'thinking_delta') { blk.thinking = (blk.thinking || '') + d.thinking; }
+      else if (d.type === 'signature_delta') { blk.signature = (blk.signature || '') + d.signature; }
+      else if (d.type === 'input_json_delta') { blk.partial_json = (blk.partial_json || '') + d.partial_json; }
+      break;
+    }
+    case 'content_block_stop': {
+      const blk = ctx.blocks[ev.index];
+      if (!blk) break;
+      if (blk.type === 'tool_use' || blk.type === 'server_tool_use') {
+        if (blk.partial_json !== undefined) {
+          try { blk.input = JSON.parse(blk.partial_json); } catch (e) { blk.input = {}; }
+          delete blk.partial_json;
+        }
+        if (cb.onToolEnd) cb.onToolEnd();
+      }
+      ctx.stoppedBlocks++;
+      break;
+    }
+    case 'message_delta': {
+      const u = ev.usage || {};
+      const out = u.output_tokens || 0;
+      const dOut = Math.max(0, out - (ctx.lastOutput || 0));
+      ctx.lastOutput = out;
+      if (cb.onUsage) cb.onUsage({ input: 0, output: dOut });
+      if (ev.delta && ev.delta.stop_reason) {
+        ctx.stopReason = ev.delta.stop_reason;
+        if (cb.onStopReason) cb.onStopReason(ev.delta.stop_reason);
+      }
+      break;
+    }
+    case 'message_stop': ctx.sawStop = true; break;
+    case 'ping': break;
+    case 'error': {
+      const msg = (ev.error && ev.error.message) || '未知流错误';
+      const err = new Error('流内错误：' + msg);
+      err.retryable = true;
+      throw err;
+    }
+    default: break;
+  }
+}
+
+/* 单条 SSE data 载荷：多行 data: 拼接后再解析（兼容网关分片/换行）；[DONE] 视为流结束 */
+function dispatchEventData(data, ctx, cb) {
+  if (!data) return;
+  if (data === '[DONE]') { ctx.sawDone = true; return; }
+  let ev;
+  try { ev = JSON.parse(data); } catch (e) { return; }
+  handleEvent(ev, ctx, cb);
+}
+
+async function readSSE(resp, ctx, cb) {
+  const reader = resp.body.getReader();
+  const dec = new TextDecoder();
+  const chunks = [];
+  let buf = '';
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      buf += dec.decode(value, { stream: true });
+      let m;
+      while ((m = buf.match(/(\r?\n\r?\n)/)) !== null) {
+        const raw = buf.slice(0, m.index);
+        buf = buf.slice(m.index + m[0].length);
+        const dataLines = [];
+        for (const ln of raw.split(/\r?\n/)) {
+          const t = ln.trim();
+          if (t.startsWith('data:')) dataLines.push(t.slice(5).trim());
+        }
+        dispatchEventData(dataLines.join('\n'), ctx, cb);
+      }
+    }
+    if (buf.trim()) {
+      const dataLines = [];
+      for (const ln of buf.split(/\r?\n/)) {
+        const t = ln.trim();
+        if (t.startsWith('data:')) dataLines.push(t.slice(5).trim());
+      }
+      dispatchEventData(dataLines.join('\n'), ctx, cb);
+    }
+  } finally {
+    ctx.fullText = new TextDecoder().decode(concatBytes(chunks));
+    try { await reader.cancel(); } catch (e) { /* ignore */ }
+  }
+}
+
+/* 兜底：个别三方网关忽略 stream:true 直接返回整段 JSON（可能还包在 SSE data: 帧里，或 content 为纯文本） */
+function tryParseBuffered(ctx) {
+  if (!ctx.fullText) return null;
+  const cleaned = String(ctx.fullText).replace(/^\s*data:\s*/gm, '').trim();
+  let j;
+  try { j = JSON.parse(cleaned); } catch (e) { return null; }
+  const msg = (j && j.message && typeof j.message === 'object') ? j.message : j;
+  const content = msg && msg.content;
+  const stopReason = j.stop_reason || (msg && msg.stop_reason) || 'end_turn';
+  if (Array.isArray(content)) {
+    const blocks = content.map((b) => (b && typeof b === 'object' ? deepCopy(b) : { type: 'text', text: String(b) }));
+    return { blocks: blocks, stopReason: stopReason };
+  }
+  if (typeof content === 'string' && content.trim()) {
+    return { blocks: [{ type: 'text', text: content }], stopReason: stopReason };
+  }
+  return null;
+}
+
+/* 网关以 HTTP 200 包装的 JSON 错误对象（无 content）→ 提取 message 供直接展示 */
+function parseGatewayError(raw) {
+  if (!raw) return null;
+  const cleaned = String(raw).replace(/^\s*data:\s*/gm, '').trim();
+  let j;
+  try { j = JSON.parse(cleaned); } catch (e) { return null; }
+  if (j && j.error) {
+    const m = j.error.message || j.error.type || j.error;
+    return String(typeof m === 'string' ? m : JSON.stringify(m)).slice(0, 300);
+  }
+  return null;
+}
+
+function retryWait(attempt, signal, fixed) {
+  const ms = fixed != null ? fixed : (attempt === 0 ? 2500 : 5000);
+  return sleep(ms, signal);
+}
+
+/* 核心：发送一轮消息，返回 { blocks, stopReason }。
+ * 内部完成：SSE 组装、400 参数剥离、断流回滚重试（429 等 10s，其余 2.5s/5s，最多 2 次）。 */
+/* 已剥离参数按端点缓存：三方网关不支持的参数，后续步骤不再反复触发 400 */
+let strippedCache = null; // { endpoint, flags }
+
+async function sendAnthropic({ messages, signal, onText, onToolStart, onToolEnd, onUsage, onStopReason, onRewind, onNotice }) {
+  const official = isOfficial(settings.base);
+  const base = cleanBase(settings.base);
+  const url = messagesUrl(base);
+  const stripped = (strippedCache && strippedCache.endpoint === url)
+    ? Object.assign({}, strippedCache.flags)
+    : { fallbacks: false, cache: false, tools: false };
+  let attempt = 0;
+
+  while (true) {
+    const body = buildBody(settings, messages, stripped, official);
+    const headers = buildHeaders(settings, official);
+    let resp;
+    try {
+      resp = await fetch(url, { method: 'POST', headers: headers, body: JSON.stringify(body), signal: signal });
     } catch (e) {
-      if (signal.aborted || e.name === "AbortError") throw e;
-      const msg = e.message || "";
-      const retryable = e.name === "TypeError" ||
-        /network|fetch|load failed|stream error|overloaded|API 5\d\d|API 529|API 429/i.test(msg);
-      if (!retryable || attempt >= MAX_RETRY) {
-        if (e.name === "TypeError" || /network|fetch|load failed/i.test(msg))
-          throw new Error(`连接被平台中断（已自动重试 ${MAX_RETRY} 次）。多为中转平台对长流式请求的超时断流，点下方按钮从本步继续。`);
-        throw e;
+      /* fetch 抛错：网络中断 / TypeError */
+      if (isAbort(e)) throw e;
+      if (attempt < MAX_RETRIES) {
+        if (onRewind) onRewind();
+        await retryWait(attempt, signal);
+        attempt++;
+        continue;
       }
-      sec.text = ckText; sec.searches = ckSearches; renderSec(sec);
-      const wait = /429/.test(msg) ? 10000 : 2500 * (attempt + 1);
-      setStatus(sec, `连接中断，${Math.round(wait / 1000)} 秒后重试（${attempt + 1}/${MAX_RETRY}）…`, "run");
-      await new Promise((r) => setTimeout(r, wait));
+      throw new Error('网络中断：' + e.message);
     }
+
+    if (resp.status === 400) {
+      const txt = await readErrText(resp);
+      const hit = stripParam(txt, stripped);
+      if (hit === 'fallbacks') { stripped.fallbacks = true; strippedCache = { endpoint: url, flags: Object.assign({}, stripped) }; if (onNotice) onNotice('网关不支持 fallbacks 参数，已剥离后重试'); continue; }
+      if (hit === 'cache') { stripped.cache = true; strippedCache = { endpoint: url, flags: Object.assign({}, stripped) }; continue; }
+      if (hit === 'tools') { stripped.tools = true; strippedCache = { endpoint: url, flags: Object.assign({}, stripped) }; if (onNotice) onNotice('该平台不支持检索工具，已降级（本步不再有 A 档）'); continue; }
+      throw new Error('请求被拒绝（HTTP 400）：' + txt.slice(0, 300));
+    }
+    if (RETRYABLE_STATUS.has(resp.status)) {
+      if (attempt < MAX_RETRIES) {
+        if (onRewind) onRewind();
+        await retryWait(attempt, signal, resp.status === 429 ? 10000 : null);
+        attempt++;
+        continue;
+      }
+      throw new Error('服务暂时不可用（HTTP ' + resp.status + '）');
+    }
+    if (!resp.ok) {
+      const txt = await readErrText(resp);
+      throw new Error('请求失败（HTTP ' + resp.status + '）：' + txt.slice(0, 300));
+    }
+    if (!resp.body) {
+      if (attempt < MAX_RETRIES) {
+        if (onRewind) onRewind();
+        await retryWait(attempt, signal);
+        attempt++;
+        continue;
+      }
+      throw new Error('响应没有可读取的流');
+    }
+
+    const ctx = { blocks: [], lastOutput: 0, stopReason: null, sawStop: false, sawDone: false, startedBlocks: 0, stoppedBlocks: 0, fullText: '' };
+    try {
+      await readSSE(resp, ctx, { onText: onText, onToolStart: onToolStart, onToolEnd: onToolEnd, onUsage: onUsage, onStopReason: onStopReason });
+    } catch (e) {
+      if (isAbort(e)) throw e;
+      /* 流中途网络断开（reader.read 抛 TypeError）同样按断流回滚重试 */
+      const midStreamRetryable = e.retryable || (e instanceof TypeError) || /network|fetch|load failed|failed to fetch/i.test(String(e.message));
+      if (midStreamRetryable && attempt < MAX_RETRIES) {
+        if (onRewind) onRewind();
+        await retryWait(attempt, signal);
+        attempt++;
+        continue;
+      }
+      throw e;
+    }
+
+    /* 断流判定：
+       1) 有完成信号（message_stop / stop_reason / 块全部闭合 / [DONE]）→ 正常完成
+       2) 网关忽略 stream 直接返回整段 JSON → 兜底解析
+       3) 流被掐断但已有正文 → 保留内容，按「流中断，内容保留」处理（不重试，避免网关确定性截断时白烧 token）
+       4) 什么都没收到 → 回滚重试；耗尽后报错并附诊断信息 */
+    const blocksComplete = ctx.startedBlocks > 0 && ctx.stoppedBlocks >= ctx.startedBlocks;
+    const complete = ctx.sawStop || ctx.stopReason || ctx.sawDone || blocksComplete;
+    if (!complete) {
+      /* 兜底 1：网关忽略 stream 返回整段 JSON（含包在 SSE data: 帧里的） */
+      const fb = tryParseBuffered(ctx);
+      if (fb) { finalizeBlocks(fb.blocks); return { blocks: fb.blocks, stopReason: fb.stopReason }; }
+      const gotLen = ctx.fullText ? ctx.fullText.length : 0;
+      const snippet = String(ctx.fullText || '').replace(/\s+/g, ' ').trim().slice(0, 180);
+      /* 兜底 2：HTTP 200 包装的 JSON 错误对象 → 直接展示网关原因，不重试 */
+      const gwErr = parseGatewayError(ctx.fullText);
+      if (gwErr) throw new Error('网关响应异常（未按流式返回内容）：' + gwErr);
+      /* 兜底 3：响应是 HTML/错误页 → 直接失败，不重试 */
+      if (/^\s*<(?:!doctype|html|head|body|error|h[1-6]|pre|div)/i.test(String(ctx.fullText || '').trim())) {
+        const titleM = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(String(ctx.fullText || ''));
+        const title = titleM ? titleM[1].replace(/\s+/g, ' ').trim() : '';
+        throw new Error('该地址返回的是网页（HTML，' + gotLen + ' 字符' + (title ? '，标题「' + title + '」' : '') + '）而非 API 流式响应。请确认「API 地址」填的是网关的 API 接口地址（提供 Anthropic Messages 的 /v1/messages 接口），而非其网页控制台地址。响应开头：' + (snippet || '（空）'));
+      }
+      /* 兜底 4：流被掐断但已有正文 → 保留内容 */
+      const textBlocks = ctx.blocks.filter((b) => b && b.type === 'text' && b.text);
+      if (textBlocks.length > 0) {
+        return { blocks: textBlocks, stopReason: 'stream_cut' }; /* 截断保留：内容不全但可用 */
+      }
+      if (attempt < MAX_RETRIES) {
+        if (onRewind) onRewind();
+        await retryWait(attempt, signal);
+        attempt++;
+        continue;
+      }
+      const openaiHint = /"choices"|finish_reason|"delta"/.test(String(ctx.fullText || ''));
+      throw new Error('流意外中断，未收到完成信号（已接收 ' + ctx.startedBlocks + ' 个内容块 / ' + gotLen + ' 字符）' + (openaiHint ? '；响应疑似 OpenAI 兼容格式，当前仅支持 Anthropic Messages 协议' : '') + '；响应开头：' + (snippet ? snippet + '…' : '（空响应）'));
+    }
+
+    finalizeBlocks(ctx.blocks);
+    const truncated = ctx.sawDone && !blocksComplete && !ctx.stopReason;
+    return { blocks: ctx.blocks.filter(Boolean), stopReason: ctx.stopReason || (truncated ? 'stream_cut' : null) };
   }
 }
 
-// One logical turn: handles pause_turn continuations. Appends assistant turns into state.convo.
-// On failure, removes this turn's messages from convo so a retry starts clean.
-async function runTurn(userText, sec) {
-  state.convo.push({ role: "user", content: userText });
-  const userIdx = state.convo.length - 1;
-  const ctrl = new AbortController();
-  state.abort = ctrl;
-  setStatus(sec, "生成中…", "run");
-  try {
-    for (let i = 0; i < 10; i++) {
-      const { blocks, stopReason } = await streamWithRetry(state.convo, sec, ctrl.signal);
-      state.convo.push({ role: "assistant", content: blocks });
-      if (stopReason === "pause_turn") { setStatus(sec, "检索较多，继续…", "run"); continue; }
-      if (stopReason === "refusal") { setStatus(sec, "请求被安全分类器拒绝（含备用模型）", "err"); return false; }
-      if (stopReason === "max_tokens") { setStatus(sec, "达到输出上限，内容可能被截断", "err"); return true; }
-      setStatus(sec, sec.searches ? `完成 · 检索 ${sec.searches} 次` : "完成");
-      return true;
+/* ---------------- OpenAI 兼容协议（DeepSeek 等）：/chat/completions ---------------- */
+
+/* 把会话历史转成 OpenAI 格式：system 前置；assistant 的 blocks 只保留 text 部分 */
+function toOpenAIMessages(session) {
+  const out = [{ role: 'system', content: SYSTEM_PROMPT }];
+  for (const m of session) {
+    if (m.role === 'user') {
+      let content = m.content;
+      if (Array.isArray(content)) content = content.map((b) => (b && b.text) || '').join('\n');
+      out.push({ role: 'user', content: String(content || '') });
+    } else if (m.role === 'assistant') {
+      const parts = Array.isArray(m.content) ? m.content : [];
+      const text = parts.filter((b) => b && b.type === 'text').map((b) => b.text || '').join('\n');
+      if (text.trim()) out.push({ role: 'assistant', content: text });
     }
-    setStatus(sec, "连续续传超限，已停止", "err");
+  }
+  return out;
+}
+
+function handleOpenAIChunk(payload, ctx, cb) {
+  if (payload === '[DONE]') { ctx.sawDone = true; return; }
+  let ev;
+  try { ev = JSON.parse(payload); } catch (e) { return; }
+  const choice = ev.choices && ev.choices[0];
+  if (choice) {
+    const delta = choice.delta || {};
+    if (typeof delta.content === 'string' && delta.content) {
+      ctx.text += delta.content;
+      if (cb.onText) cb.onText(delta.content);
+    }
+    if (choice.finish_reason) {
+      const fr = choice.finish_reason;
+      ctx.stopReason = fr === 'stop' ? 'end_turn' : (fr === 'length' ? 'max_tokens' : (fr === 'content_filter' ? 'refusal' : 'end_turn'));
+      if (cb.onStopReason) cb.onStopReason(ctx.stopReason);
+    }
+  }
+  if (ev.usage) {
+    const u = ev.usage;
+    const input = ((u.prompt_cache_hit_tokens || 0) + (u.prompt_cache_miss_tokens || 0)) || u.prompt_tokens || 0;
+    const out = u.completion_tokens || 0;
+    const dOut = Math.max(0, out - (ctx.lastOut || 0));
+    ctx.lastOut = out;
+    if (cb.onUsage) cb.onUsage({ input: input, output: dOut });
+  }
+}
+
+async function readOpenAISSE(resp, ctx, cb) {
+  const reader = resp.body.getReader();
+  const dec = new TextDecoder();
+  const chunks = [];
+  let buf = '';
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      buf += dec.decode(value, { stream: true });
+      let m;
+      while ((m = buf.match(/(\r?\n\r?\n)/)) !== null) {
+        const raw = buf.slice(0, m.index);
+        buf = buf.slice(m.index + m[0].length);
+        const dataLines = [];
+        for (const ln of raw.split(/\r?\n/)) {
+          const t = ln.trim();
+          if (t.startsWith('data:')) dataLines.push(t.slice(5).trim());
+        }
+        handleOpenAIChunk(dataLines.join('\n'), ctx, cb);
+      }
+    }
+    if (buf.trim()) {
+      const dataLines = [];
+      for (const ln of buf.split(/\r?\n/)) {
+        const t = ln.trim();
+        if (t.startsWith('data:')) dataLines.push(t.slice(5).trim());
+      }
+      handleOpenAIChunk(dataLines.join('\n'), ctx, cb);
+    }
+  } finally {
+    ctx.fullText = new TextDecoder().decode(concatBytes(chunks));
+    try { await reader.cancel(); } catch (e) { /* ignore */ }
+  }
+}
+
+/* 兜底：网关忽略 stream 直接返回整段 OpenAI JSON */
+function tryParseBufferedOpenAI(ctx) {
+  if (!ctx.fullText) return null;
+  let j;
+  try { j = JSON.parse(String(ctx.fullText).trim()); } catch (e) { return null; }
+  const choice = j && j.choices && j.choices[0];
+  if (!choice || !choice.message) return null;
+  const text = typeof choice.message.content === 'string' ? choice.message.content : '';
+  let sr = 'end_turn';
+  if (choice.finish_reason === 'length') sr = 'max_tokens';
+  else if (choice.finish_reason === 'content_filter') sr = 'refusal';
+  return { blocks: text ? [{ type: 'text', text: text }] : [], stopReason: sr };
+}
+
+/* OpenAI 兼容请求：同样的断流重试/参数剥离骨架，SSE 为 choices/delta 格式 */
+async function sendOpenAI({ messages, signal, onText, onUsage, onStopReason, onRewind, onNotice }) {
+  const url = openaiUrl(settings.base);
+  const stripped = { maxTokens: false };
+  const maxTokens = Math.min(Math.max(1, Number(settings.maxTokens) || 64000), 8192); /* DeepSeek 上限 8192 */
+  let attempt = 0;
+
+  while (true) {
+    const body = { model: settings.model, messages: toOpenAIMessages(messages), stream: true };
+    if (!stripped.maxTokens) body.max_tokens = maxTokens;
+    const headers = buildOpenAIHeaders(settings);
+    let resp;
+    try {
+      resp = await fetch(url, { method: 'POST', headers: headers, body: JSON.stringify(body), signal: signal });
+    } catch (e) {
+      if (isAbort(e)) throw e;
+      if (attempt < MAX_RETRIES) {
+        if (onRewind) onRewind();
+        await retryWait(attempt, signal);
+        attempt++;
+        continue;
+      }
+      throw new Error('网络中断：' + e.message);
+    }
+    if (resp.status === 400) {
+      const txt = await readErrText(resp);
+      if (!stripped.maxTokens && /max_tokens/i.test(txt)) {
+        stripped.maxTokens = true;
+        if (onNotice) onNotice('网关不接受 max_tokens 参数，已剥离重试');
+        continue;
+      }
+      throw new Error('请求被拒绝（HTTP 400）：' + txt.slice(0, 300));
+    }
+    if (RETRYABLE_STATUS.has(resp.status)) {
+      if (attempt < MAX_RETRIES) {
+        if (onRewind) onRewind();
+        await retryWait(attempt, signal, resp.status === 429 ? 10000 : null);
+        attempt++;
+        continue;
+      }
+      throw new Error('服务暂时不可用（HTTP ' + resp.status + '）');
+    }
+    if (!resp.ok) {
+      const txt = await readErrText(resp);
+      throw new Error('请求失败（HTTP ' + resp.status + '）：' + txt.slice(0, 300));
+    }
+    if (!resp.body) {
+      if (attempt < MAX_RETRIES) {
+        if (onRewind) onRewind();
+        await retryWait(attempt, signal);
+        attempt++;
+        continue;
+      }
+      throw new Error('响应没有可读取的流');
+    }
+
+    const ctx = { text: '', stopReason: null, sawDone: false, lastOut: 0, fullText: '' };
+    try {
+      await readOpenAISSE(resp, ctx, { onText: onText, onUsage: onUsage, onStopReason: onStopReason });
+    } catch (e) {
+      if (isAbort(e)) throw e;
+      const midStreamRetryable = e.retryable || (e instanceof TypeError) || /network|fetch|load failed|failed to fetch/i.test(String(e.message));
+      if (midStreamRetryable && attempt < MAX_RETRIES) {
+        if (onRewind) onRewind();
+        await retryWait(attempt, signal);
+        attempt++;
+        continue;
+      }
+      throw e;
+    }
+
+    if (!ctx.sawDone && !ctx.stopReason) {
+      const fb = tryParseBufferedOpenAI(ctx);
+      if (fb) return fb;
+      if (attempt < MAX_RETRIES) {
+        if (onRewind) onRewind();
+        await retryWait(attempt, signal);
+        attempt++;
+        continue;
+      }
+      throw new Error('流意外中断，未收到完成信号（' + (ctx.fullText ? ctx.fullText.length : 0) + ' 字符）');
+    }
+    return { blocks: ctx.text ? [{ type: 'text', text: ctx.text }] : [], stopReason: ctx.stopReason };
+  }
+}
+
+/* 协议分发入口 */
+async function sendMessages(opts) {
+  if (effectiveProtocol() === 'openai') return sendOpenAI(opts);
+  return sendAnthropic(opts);
+}
+
+
+/* ================================================================
+ * 六、卡片与状态 UI
+ * ================================================================ */
+
+function ensureCard(n) {
+  if (sections[n]) return sections[n];
+  const card = document.createElement('article');
+  card.className = 'card';
+  card.id = 'card-' + n;
+  card.innerHTML =
+    '<header class="card-head"><h2>' + STEP_META[n].title + '</h2>' +
+    '<div class="status idle"><span class="dot"></span>等待中</div></header>' +
+    '<div class="body"></div><div class="actions"></div>' +
+    (n === 5 ? '<div class="chat-input-row" hidden><input class="chat-input" type="text" placeholder=""></div>' : '');
+  mainEl.appendChild(card);
+  const sec = { n: n, card: card, rawText: '', toolCount: 0 };
+  sections[n] = sec;
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  return sec;
+}
+
+function setStatus(n, text, cls) {
+  const sec = sections[n];
+  if (!sec || !sec.card) return;
+  const el = sec.card.querySelector('.status');
+  if (!el) return;
+  el.className = 'status ' + (cls || 'idle');
+  el.innerHTML = '<span class="dot"></span>' + escapeHtml(text);
+}
+
+function setStopEnabled(on) { $('btnStop').disabled = !on; }
+
+function updateTokens() {
+  $('tokenUsage').textContent = '输入 ' + state.tokens.in.toLocaleString() + ' · 输出 ' + state.tokens.out.toLocaleString();
+}
+
+function toast(msg) {
+  let wrap = document.querySelector('.toast-wrap');
+  if (!wrap) { wrap = document.createElement('div'); wrap.className = 'toast-wrap'; document.body.appendChild(wrap); }
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  wrap.appendChild(t);
+  setTimeout(() => t.remove(), 5000);
+}
+
+function clip(s, n) { return s.length > n ? s.slice(0, n) + '…' : s; }
+
+/* ================================================================
+ * 七、流水线：Step0 → 四步串行 → 断点续跑
+ * ================================================================ */
+
+function startAnalysis() {
+  const industry = industryInput.value.trim();
+  if (!industry) { industryInput.focus(); toast('请先输入行业名称'); return; }
+  if (!settings.key) { openSettings(); toast('请先在设置中填写 API Key'); return; }
+  if (currentAbort) { currentAbort.abort(); currentAbort = null; }
+
+  state.gen++;
+  state.industry = industry;
+  state.choice = null;
+  state.session.length = 0;
+  state.tokens.in = 0; state.tokens.out = 0;
+  state.chatRound = 0; state.chatBusy = false; state.chatDone = false;
+  sections = {};
+  mainEl.innerHTML = '';
+  updateTokens();
+  setStopEnabled(true);
+  ensureCard(0);
+  runStep(0);
+}
+
+function buildStepPrompt(n) {
+  if (n === 0) return STEP_PROMPTS[0](state.industry);
+  if (n === 1) return STEP_PROMPTS[1](state.choice || '你选定的边界');
+  return STEP_PROMPTS[n]();
+}
+
+async function runStep(n) {
+  const gen = state.gen;
+  const sec = ensureCard(n);
+  sec.rawText = '';
+  sec.toolCount = 0;
+  setStatus(n, '生成中…', 'running');
+  const actions = sec.card.querySelector('.actions');
+  actions.innerHTML = '';
+
+  const preLen = state.session.length;
+  state.session.push({ role: 'user', content: buildStepPrompt(n) });
+
+  const ac = new AbortController();
+  currentAbort = ac;
+  setStopEnabled(true);
+
+  let blocks = null;
+  let stopReason = null;
+  try {
+    for (let cont = 0; cont <= MAX_PAUSE_CONT; cont++) {
+      const snap = sec.rawText;
+      const res = await sendMessages({
+        messages: state.session,
+        signal: ac.signal,
+        onText: (t) => { sec.rawText += t; scheduleRender(n); },
+        onToolStart: () => { sec.toolCount++; setStatus(n, '检索中…（第 ' + sec.toolCount + ' 次）', 'running'); },
+        onToolEnd: () => { setStatus(n, '生成中…', 'running'); },
+        onUsage: (u) => { state.tokens.in += u.input; state.tokens.out += u.output; updateTokens(); },
+        onStopReason: (r) => { stopReason = r; },
+        onRewind: () => { sec.rawText = snap; scheduleRender(n); },
+        onNotice: (msg) => toast(msg)
+      });
+      if (gen !== state.gen) return; /* 新一轮分析已开始，本回合作废 */
+      blocks = res.blocks;
+      stopReason = res.stopReason;
+      if (stopReason === 'pause_turn' && cont < MAX_PAUSE_CONT) {
+        /* 把已组装的 assistant blocks 原样 push 进会话再续传（连续同角色消息 API 自动合并） */
+        state.session.push({ role: 'assistant', content: blocks });
+        continue;
+      }
+      break;
+    }
+  } catch (e) {
+    if (gen !== state.gen) return;
+    if (currentAbort === ac) currentAbort = null;
+    setStopEnabled(false);
+    state.session.length = preLen; /* 失败清理：弹出本轮 user 消息和半截 assistant 消息 */
+    failStep(n, e.message, isAbort(e));
+    return;
+  }
+  if (gen !== state.gen) return;
+  if (currentAbort === ac) currentAbort = null;
+  setStopEnabled(false);
+
+  if (stopReason === 'refusal') {
+    state.session.length = preLen;
+    failStep(n, '被安全分类器拒绝', false);
+    return;
+  }
+  if (stopReason === 'pause_turn') {
+    state.session.length = preLen;
+    failStep(n, '检索续传超过 10 次', false);
+    return;
+  }
+
+  state.session.push({ role: 'assistant', content: blocks });
+  let statusText = '完成 · 检索 ' + sec.toolCount + ' 次';
+  if (stopReason === 'max_tokens') statusText += '（可能被截断）';
+  else if (stopReason === 'stream_cut') statusText += '（流中断，内容保留）';
+  setStatus(n, statusText, 'done');
+  stepComplete(n);
+}
+
+function stepComplete(n) {
+  if (n === 0) showCandidates();
+  else if (n <= 3) runStep(n + 1);
+  else if (n === 4) showStep5Entry();
+}
+
+function failStep(n, reason, stopped) {
+  const sec = sections[n];
+  if (!sec) return;
+  setStatus(n, stopped ? '已停止' : '出错：' + reason, 'error');
+  const actions = sec.card.querySelector('.actions');
+  actions.innerHTML = '';
+  const row = document.createElement('div');
+  row.className = 'retry-row';
+  if (!stopped) {
+    const detail = document.createElement('div');
+    detail.className = 'notice';
+    detail.textContent = '出错原因：' + reason;
+    row.appendChild(detail);
+  }
+  const b = document.createElement('button');
+  b.className = 'btn primary';
+  b.textContent = '重试本步并继续';
+  b.onclick = () => retryStep(n);
+  row.appendChild(b);
+  actions.appendChild(row);
+}
+
+function retryStep(n) {
+  const sec = sections[n];
+  if (!sec) return;
+  sec.rawText = '';          /* 清空该节正文 */
+  scheduleRender(n);
+  runStep(n);                /* 只重跑这一步，成功后自动继续 */
+}
+
+/* ---- Step 0 候选边界 ---- */
+
+function extractCandidates(raw) {
+  const lines = String(raw).split('\n');
+  const HEADER_RE = [
+    /^\s*(?:#{1,4}\s*)?\*{0,2}候选\s*[一二三四五六123456]+\s*(?:[：:、)）\s（(]|$)/,
+    /^\s*[（(]\s*[一二三四五六1-6]\s*[)）]\s*(?:候选|边界|方案|行业)/,
+    /^\s*[一二三四五六1-6]\s*[.、．)）]\s*(?:候选|边界|方案|行业)/
+  ];
+  const headers = [];
+  lines.forEach((line, idx) => {
+    const t = line.trim();
+    if (HEADER_RE.some((re) => re.test(t))) headers.push(idx);
+  });
+  if (!headers.length) {
+    lines.forEach((line, idx) => { if (/^\s*\*{1,2}候选/.test(line.trim())) headers.push(idx); });
+  }
+  const hs = headers.slice(0, 4);
+  if (hs.length >= 2) {
+    const out = [];
+    hs.forEach((h, i) => {
+      const end = i + 1 < hs.length ? hs[i + 1] : lines.length;
+      const seg = lines.slice(h, end).join('\n').trim();
+      const first = lines[h].replace(/^#+\s*/, '').replace(/^\*{1,2}|\*{1,2}$/g, '').trim();
+      out.push({ label: clip(first || ('候选' + '一二三四'[i]), 26), text: seg.slice(0, 1200) });
+    });
+    return out;
+  }
+  return ['候选一', '候选二', '候选三', '候选四'].map((l) => ({ label: l, text: l }));
+}
+
+function showCandidates() {
+  const sec = sections[0];
+  if (!sec) return;
+  const cands = extractCandidates(sec.rawText);
+  const actions = sec.card.querySelector('.actions');
+  actions.innerHTML = '';
+  const box = document.createElement('div');
+  box.className = 'cand-box';
+
+  const hint = document.createElement('div');
+  hint.className = 'cand-hint';
+  hint.textContent = '请选择边界：点击候选直接开始，或在下方输入自定义边界（支持交叉组合，如「候选一 + 候选三」），回车确认。';
+  box.appendChild(hint);
+
+  const row = document.createElement('div');
+  row.className = 'cand-row';
+  cands.forEach((c) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'btn cand';
+    b.textContent = c.label;
+    b.title = c.text;
+    b.onclick = () => chooseBoundary(c.text);
+    row.appendChild(b);
+  });
+  box.appendChild(row);
+
+  const input = document.createElement('input');
+  input.className = 'cand-input';
+  input.placeholder = '自定义边界（可交叉组合），输入后回车确认';
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.isComposing && input.value.trim()) chooseBoundary(input.value.trim());
+  });
+  box.appendChild(input);
+  actions.appendChild(box);
+}
+
+function chooseBoundary(choice) {
+  state.choice = choice;
+  setStatus(0, '完成 · 边界已确认', 'done');
+  const sec = sections[0];
+  if (sec) sec.card.querySelector('.actions').innerHTML = '';
+  runStep(1);
+}
+
+/* ================================================================
+ * 八、Step 5 从业者拷问（聊天模式）
+ * ================================================================ */
+
+function showStep5Entry() {
+  const sec = ensureCard(5);
+  setStatus(5, '可选 · 未开始', 'idle');
+  const actions = sec.card.querySelector('.actions');
+  actions.innerHTML = '';
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'btn primary';
+  b.textContent = '进入从业者拷问';
+  b.onclick = startChat;
+  actions.appendChild(b);
+  sec.card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function startChat() {
+  const sec = sections[5];
+  if (!sec) return;
+  state.chatRound = 0;
+  state.chatBusy = false;
+  state.chatDone = false;
+  sec.card.querySelector('.actions').innerHTML = '';
+  const row = sec.card.querySelector('.chat-input-row');
+  row.hidden = false;
+  const input = sec.card.querySelector('.chat-input');
+  input.disabled = false;
+  input.placeholder = '第 1 / 15 轮：回答从业者的问题…';
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.isComposing && !state.chatBusy && !state.chatDone) {
+      const v = input.value.trim();
+      if (v) { input.value = ''; sendChat(v); }
+    }
+  });
+
+  setStatus(5, '第 1 / 15 轮 · 生成中…', 'running');
+  const preLen = state.session.length;
+  state.session.push({ role: 'user', content: STEP_PROMPTS[5]() });
+  const ok = await chatStream(preLen);
+  if (ok) {
+    setStatus(5, '第 1 / 15 轮 · 等待你回答', 'idle');
+    input.focus();
+  }
+}
+
+async function sendChat(text) {
+  if (state.chatBusy || state.chatDone) return;
+  state.chatBusy = true;
+  const sec = sections[5];
+  if (!sec) { state.chatBusy = false; return; }
+  const snapRaw = sec.rawText;
+  sec.rawText += '\n\n' + text.split('\n').map((l) => '> **你：**' + l).join('\n') + '\n\n';
+  scheduleRender(5);
+  const preLen = state.session.length;
+  state.session.push({ role: 'user', content: text });
+  setStatus(5, '第 ' + (state.chatRound + 1) + ' / 15 轮 · 生成中…', 'running');
+
+  const ok = await chatStream(preLen);
+  if (ok) {
+    state.chatRound++;
+    if (state.chatRound >= 15) { await triggerDiagnosis(); return; }
+    setStatus(5, '第 ' + (state.chatRound + 1) + ' / 15 轮 · 等待你回答', 'idle');
+    const input = sec.card.querySelector('.chat-input');
+    input.placeholder = '第 ' + (state.chatRound + 1) + ' / 15 轮：回答从业者的问题…';
+    input.focus();
+  } else {
+    sec.rawText = snapRaw; /* 失败回滚本轮渲染文本 */
+    scheduleRender(5);
+  }
+  state.chatBusy = false;
+}
+
+/* 发送当前 session 并流式渲染到 Step5 卡片；失败时把会话截断回 preLen */
+async function chatStream(preLen) {
+  const gen = state.gen;
+  const sec = sections[5];
+  if (!sec) return false;
+  const ac = new AbortController();
+  currentAbort = ac;
+  setStopEnabled(true);
+
+  let blocks = null;
+  let stopReason = null;
+  try {
+    for (let cont = 0; cont <= MAX_PAUSE_CONT; cont++) {
+      const snap = sec.rawText;
+      const res = await sendMessages({
+        messages: state.session,
+        signal: ac.signal,
+        onText: (t) => { sec.rawText += t; scheduleRender(5); },
+        onToolStart: () => { sec.toolCount++; setStatus(5, '检索中…（第 ' + sec.toolCount + ' 次）', 'running'); },
+        onToolEnd: () => { setStatus(5, '生成中…', 'running'); },
+        onUsage: (u) => { state.tokens.in += u.input; state.tokens.out += u.output; updateTokens(); },
+        onStopReason: (r) => { stopReason = r; },
+        onRewind: () => { sec.rawText = snap; scheduleRender(5); },
+        onNotice: (msg) => toast(msg)
+      });
+      if (gen !== state.gen) return false;
+      blocks = res.blocks;
+      stopReason = res.stopReason;
+      if (stopReason === 'pause_turn' && cont < MAX_PAUSE_CONT) {
+        state.session.push({ role: 'assistant', content: blocks });
+        continue;
+      }
+      break;
+    }
+  } catch (e) {
+    if (gen !== state.gen) return false;
+    if (currentAbort === ac) currentAbort = null;
+    setStopEnabled(false);
+    state.session.length = preLen;
+    setStatus(5, isAbort(e) ? '已停止' : '出错：' + e.message, 'error');
     return false;
-  } catch (e) {
-    state.convo.length = userIdx; // drop the dangling user msg + partial assistant turns
-    throw e;
+  }
+  if (gen !== state.gen) return false;
+  if (currentAbort === ac) currentAbort = null;
+  setStopEnabled(false);
+
+  if (stopReason === 'refusal') { state.session.length = preLen; setStatus(5, '被安全分类器拒绝', 'error'); return false; }
+  if (stopReason === 'pause_turn') { state.session.length = preLen; setStatus(5, '检索续传超过 10 次', 'error'); return false; }
+
+  state.session.push({ role: 'assistant', content: blocks });
+  return true;
+}
+
+async function triggerDiagnosis() {
+  const sec = sections[5];
+  if (!sec) return;
+  const input = sec.card.querySelector('.chat-input');
+  input.disabled = true;
+  setStatus(5, '15 轮完成 · 生成诊断中…', 'running');
+  const msg = '现在请跳出角色，给出诊断：\n1. 这份报告里哪几栏其实是空的，只是看起来被填满了；\n2. 我哪几处用词暴露了我是外行（原句 + 内行会怎么说）；\n3. 如果我只能再补 3 块知识，应该补哪 3 块。';
+  const preLen = state.session.length;
+  state.session.push({ role: 'user', content: msg });
+  const ok = await chatStream(preLen);
+  if (ok) {
+    state.chatDone = true;
+    state.chatBusy = false;
+    setStatus(5, '拷问完成 · 共 ' + state.chatRound + ' 轮', 'done');
+    input.placeholder = '拷问已结束';
+  } else {
+    state.chatBusy = false;
+    input.disabled = false;
   }
 }
 
-/* ---------------- flow ---------------- */
-function buildChoiceBar(sec) {
-  const bar = document.createElement("div");
-  bar.id = "choiceBar"; bar.className = "open";
-  bar.innerHTML = `
-    <span class="hint">选择边界：</span>
-    ${[1, 2, 3, 4].map((n) => `<button class="ghost" data-c="候选${["一","二","三","四"][n-1]}">候选${["一","二","三","四"][n-1]}</button>`).join("")}
-    <input id="customChoice" type="text" placeholder="或自定义边界 / 交叉组合，回车确认">`;
-  sec.el.appendChild(bar);
-  const pick = (choice) => { bar.remove(); runPipeline(choice); };
-  bar.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => pick(b.dataset.c)));
-  bar.querySelector("#customChoice").addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && e.target.value.trim()) pick(e.target.value.trim());
-  });
+/* ================================================================
+ * 九、导出 / 顶栏事件 / 设置面板 / 初始化
+ * ================================================================ */
+
+function exportMd() {
+  const parts = ['# ' + (state.industry || '行业') + ' · 行业分析报告', ''];
+  parts.push('> 生成时间：' + new Date().toLocaleString('zh-CN'));
+  if (state.choice) parts.push('> 选定边界：' + state.choice);
+  parts.push('');
+  let any = false;
+  for (const n of [0, 1, 2, 3, 4, 5]) {
+    const sec = sections[n];
+    if (!sec || !sec.rawText.trim()) continue;
+    any = true;
+    parts.push('## ' + STEP_META[n].title, '', sec.rawText.trim(), '');
+  }
+  if (!any) { toast('还没有可导出的内容'); return; }
+  const md = parts.join('\n');
+  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const fname = (state.industry || '行业').replace(/[\\/:*?"<>|]/g, '') + '-行业分析报告.md';
+  a.download = fname;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
 
-async function start() {
-  const industry = $("industry").value.trim();
-  if (!industry) { $("industry").focus(); return; }
-  if (!$("apiKey").value.trim()) { $("settings").classList.add("open"); $("apiKey").focus(); return; }
-  $("sections").innerHTML = ""; state.sections = []; state.convo = [];
-  state.usage = { in: 0, out: 0 }; updateUsage();
-  state.running = true; toggleButtons();
-  const sec = addSection("boundary", `Step 0 · 边界切分：${industry}`);
-  try {
-    const ok = await runTurn(P_BOUNDARY(industry), sec);
-    if (ok) buildChoiceBar(sec);
-  } catch (e) {
-    setStatus(sec, e.name === "AbortError" ? "已停止" : "出错：" + e.message + "（重新点「开始分析」即可重试）", "err");
-  } finally { state.running = false; toggleButtons(); }
-}
+$('btnStart').addEventListener('click', startAnalysis);
+industryInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) startAnalysis(); });
 
-async function runPipeline(choice, startIdx = 0, reuseSec = null) {
-  state.running = true; toggleButtons();
-  try {
-    for (let si = startIdx; si < STEPS.length; si++) {
-      const step = STEPS[si];
-      let sec;
-      if (si === startIdx && reuseSec) {
-        sec = reuseSec; sec.text = ""; sec.searches = 0; sec.mdEl.innerHTML = "";
-      } else {
-        sec = addSection(step.id, step.title);
-      }
-      const prompt = step.id === "structure" ? P_STRUCTURE(choice) : step.prompt;
-      try {
-        const ok = await runTurn(prompt, sec);
-        if (!ok) { offerResume(sec, choice, si, "重试本步并继续"); return; }
-      } catch (e) {
-        const aborted = e.name === "AbortError";
-        setStatus(sec, aborted ? "已停止" : "出错：" + e.message, "err");
-        offerResume(sec, choice, si, aborted ? "从本步继续" : "重试本步并继续");
-        return;
-      }
-    }
-    buildChatEntry();
-  } finally { state.running = false; toggleButtons(); }
-}
-
-// 断点续跑：失败/停止的步骤单独重跑，前面步骤的上下文保留在 convo 里
-function offerResume(sec, choice, si, label) {
-  const b = document.createElement("button");
-  b.textContent = label;
-  b.style.marginTop = "10px";
-  b.addEventListener("click", () => { b.remove(); runPipeline(choice, si, sec); });
-  sec.el.appendChild(b);
-}
-
-/* ---------------- roleplay chat ---------------- */
-function buildChatEntry() {
-  const card = document.createElement("div");
-  card.className = "card";
-  card.innerHTML = `<div class="head"><h2>Step 5 · 从业者拷问（可选）</h2><span class="status"></span></div>
-    <p class="hint">进入后模型扮演 12 年从业者，专挑报告里 B/C 档和「未获取」的字段发问；15 轮后给出诊断。</p>
-    <button id="enterChat">进入拷问模式</button>`;
-  $("sections").appendChild(card);
-  card.querySelector("#enterChat").addEventListener("click", async () => {
-    card.querySelector("#enterChat").remove();
-    const sec = addSection("chat", "Step 5 · 从业者拷问");
-    state.chatRounds = 0;
-    state.running = true; toggleButtons();
-    try { await runTurn(P_ROLEPLAY, sec); }
-    catch (e) { setStatus(sec, "出错：" + e.message, "err"); }
-    finally { state.running = false; toggleButtons(); }
-    buildChatBar(sec);
-  });
-}
-function buildChatBar(sec) {
-  const bar = document.createElement("div");
-  bar.id = "chatBar"; bar.className = "open";
-  bar.innerHTML = `<input id="chatInput" type="text" placeholder="你的回答…（第 1 轮）">
-    <button id="chatSend">发送</button>`;
-  sec.el.appendChild(bar);
-  const input = bar.querySelector("#chatInput");
-  const send = async () => {
-    const txt = input.value.trim();
-    if (!txt || state.running) return;
-    input.value = "";
-    state.chatRounds++;
-    const div = document.createElement("div");
-    div.className = "turn-user"; div.textContent = `你（第 ${state.chatRounds} 轮）：${txt}`;
-    sec.mdEl.appendChild(div);
-    sec.text += `\n\n> **你（第 ${state.chatRounds} 轮）**：${txt}\n\n`;
-    state.running = true; toggleButtons();
-    try { await runTurn(txt, sec); }
-    catch (e) { setStatus(sec, "出错：" + e.message, "err"); }
-    finally {
-      state.running = false; toggleButtons();
-      input.placeholder = `你的回答…（第 ${state.chatRounds + 1} 轮）`;
-      input.focus();
-    }
-  };
-  bar.querySelector("#chatSend").addEventListener("click", send);
-  input.addEventListener("keydown", (e) => { if (e.key === "Enter") send(); });
-}
-
-/* ---------------- misc ---------------- */
-function toggleButtons() {
-  $("startBtn").disabled = state.running;
-  $("stopBtn").disabled = !state.running;
-  $("exportBtn").disabled = state.sections.length === 0;
-}
-$("startBtn").addEventListener("click", start);
-$("industry").addEventListener("keydown", (e) => { if (e.key === "Enter") start(); });
-$("stopBtn").addEventListener("click", () => state.abort?.abort());
-$("exportBtn").addEventListener("click", () => {
-  const md = state.sections.map((s) => `# ${s.title}\n\n${s.text}`).join("\n\n---\n\n");
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([md], { type: "text/markdown" }));
-  a.download = `行业分析-${$("industry").value.trim() || "report"}.md`;
-  a.click(); URL.revokeObjectURL(a.href);
+$('btnStop').addEventListener('click', () => {
+  if (currentAbort) { currentAbort.abort(); currentAbort = null; }
 });
+
+$('btnExport').addEventListener('click', exportMd);
+
+/* ---- 设置面板 ---- */
+
+/* 根据面板当前值（未保存时也能预览）推断生效协议 */
+function formProtocol() {
+  const p = $('setProtocol').value;
+  if (p !== 'auto') return p;
+  return detectProtocol($('setBase').value);
+}
+function refreshProtocolUI() {
+  const proto = formProtocol();
+  $('setProtocolNote').textContent = proto === 'openai'
+    ? '当前按 OpenAI 兼容协议请求：' + openaiUrl($('setBase').value || '') + ' + Bearer；无服务端检索，max_tokens 上限 8192。'
+    : '当前按 Anthropic Messages 协议请求：' + messagesUrl($('setBase').value || '') + ' + anthropic-version；官方地址自动带 CORS 与 fallbacks 头。';
+  $('setWeb').disabled = proto === 'openai';
+  $('setWebNote').hidden = proto !== 'openai';
+}
+
+function openSettings() {
+  $('setBase').value = settings.base;
+  $('setKey').value = settings.key;
+  $('setModel').value = settings.model;
+  $('setAuth').value = settings.auth;
+  $('setProtocol').value = settings.protocol;
+  $('setWeb').checked = !!settings.web;
+  $('setMax').value = settings.maxTokens;
+  $('testResult').hidden = true;
+  refreshProtocolUI();
+  $('settingsOverlay').hidden = false;
+}
+function closeSettings() { $('settingsOverlay').hidden = true; }
+
+$('btnSettings').addEventListener('click', openSettings);
+$('setBase').addEventListener('input', refreshProtocolUI);
+$('setProtocol').addEventListener('change', refreshProtocolUI);
+$('setSave').addEventListener('click', () => {
+  settings.base = cleanBase($('setBase').value) || DEFAULT_SETTINGS.base;
+  settings.key = $('setKey').value.trim();
+  settings.model = $('setModel').value.trim() || DEFAULT_SETTINGS.model;
+  settings.auth = $('setAuth').value;
+  settings.protocol = $('setProtocol').value;
+  settings.web = $('setWeb').checked;
+  settings.maxTokens = Math.max(1, parseInt($('setMax').value, 10) || 64000);
+  saveSettings();
+  closeSettings();
+  toast('设置已保存（Key 仅存本机）');
+});
+$('setCancel').addEventListener('click', closeSettings);
+
+/* ---- 测试连接：最小请求，按当前协议把端点返回内容分类展示（不跑流水线） ---- */
+async function testConnection() {
+  const box = $('testResult');
+  box.hidden = false;
+  box.textContent = '测试中…';
+  const s = {
+    base: cleanBase($('setBase').value) || DEFAULT_SETTINGS.base,
+    key: $('setKey').value.trim(),
+    model: $('setModel').value.trim() || DEFAULT_SETTINGS.model,
+    auth: $('setAuth').value,
+  };
+  const proto = formProtocol();
+  const official = isOfficial(s.base);
+  let url, headers, body;
+  if (proto === 'openai') {
+    url = openaiUrl(s.base);
+    headers = Object.assign({ 'content-type': 'application/json' }, buildAuth(s, false));
+    body = { model: s.model, max_tokens: 16, stream: true, messages: [{ role: 'user', content: 'ping' }] };
+  } else {
+    url = messagesUrl(s.base);
+    headers = { 'content-type': 'application/json', 'anthropic-version': '2023-06-01' };
+    const mode = s.auth || 'auto';
+    if (mode === 'x-api-key' || (mode === 'auto' && official)) headers['x-api-key'] = s.key;
+    if (mode === 'bearer' || (mode === 'auto' && !official)) headers['Authorization'] = 'Bearer ' + s.key;
+    if (official) {
+      headers['anthropic-dangerous-direct-browser-access'] = 'true';
+      headers['anthropic-beta'] = 'server-side-fallback-2026-07-01';
+    }
+    body = { model: s.model, max_tokens: 16, stream: true, messages: [{ role: 'user', content: 'ping' }], system: [{ type: 'text', text: '回复 ok' }] };
+  }
+  try {
+    const resp = await fetch(url, { method: 'POST', headers: headers, body: JSON.stringify(body) });
+    const ct = resp.headers.get('content-type') || '';
+    if (!resp.ok) {
+      const txt = await resp.text().catch(() => '');
+      box.textContent = '✗ HTTP ' + resp.status + '（' + ct + '）：' + String(txt).slice(0, 300);
+      return;
+    }
+    const reader = resp.body.getReader();
+    const chunks = [];
+    let total = 0;
+    while (total < 1500) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      total += value.length;
+    }
+    try { await reader.cancel(); } catch (e) { /* ignore */ }
+    const text = new TextDecoder().decode(concatBytes(chunks));
+    const trimmed = text.replace(/\s+/g, ' ').trim().slice(0, 300);
+    const label = proto === 'openai' ? 'OpenAI 兼容' : 'Anthropic';
+    const isSSE = proto === 'openai'
+      ? /"choices"|"delta"|\[DONE\]|chat\.completion\.chunk/m.test(text)
+      : /message_start|content_block_start|^data:/m.test(text);
+    if (isSSE) {
+      box.textContent = '✓ 端点正常：收到 ' + label + ' 流式事件（content-type ' + ct + '）。开头：' + trimmed;
+    } else if (/^\s*</.test(text)) {
+      box.textContent = '✗ 该地址返回的是网页（HTML，content-type ' + ct + '）而非 API。请改填网关的 API 接口地址。开头：' + trimmed;
+    } else {
+      box.textContent = '⚠ 收到非流式/未知格式响应（content-type ' + ct + '）。开头：' + trimmed;
+    }
+  } catch (e) {
+    box.textContent = '✗ 请求失败：' + (e && e.message ? e.message : e) + '（可能是地址错误 / 网络 / CORS 问题）';
+  }
+}
+
+$('btnTest').addEventListener('click', testConnection);
+
+/* ---- 初始化 ---- */
+updateTokens();
+if (!settings.key) openSettings(); /* 首次无 Key 自动展开设置面板 */
 </script>
 </body>
 </html>
